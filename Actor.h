@@ -26,6 +26,7 @@ class Actor : public GraphObject
 	bool allowsOverlap() const { return m_allow_overlap; }
 	bool canUseExits() const { return m_can_use_exit; }
 	bool canDie() const { return m_can_die; }
+	bool isDead() const { return m_is_dead; }
 	
 	  //mutators
 	bool setDead() { m_is_dead = true; }

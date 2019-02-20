@@ -10,7 +10,6 @@
 
 using namespace std;
 
-
 GameWorld* createStudentWorld(string assetPath)
 {
 	return new StudentWorld(assetPath);
@@ -24,8 +23,7 @@ StudentWorld::StudentWorld(string assetPath)
 }
 
 int StudentWorld::init()
-{
-	 
+{	 
 	  //set completion status
 	m_level_complete = false;
 	  
@@ -88,14 +86,24 @@ int StudentWorld::move()
 	if (m_level_complete == true)
 		return GWSTATUS_FINISHED_LEVEL;
 	
-	
+	if (penelope->isDead())
+		return GWSTATUS_PLAYER_DIED;
 	penelope->doSomething();
+	
+
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
-		(*it)->doSomething();
+		if (!(*it)->isDead())
+		{
+			(*it)->doSomething();
+		
+			if (penelope->isDead())
+				return GWSTATUS_PLAYER_DIED;
+			if (m_level_complete == true)
+				return GWSTATUS_FINISHED_LEVEL;
+		}
 	}
-
 
 
 	  // Update the game status line
@@ -110,7 +118,6 @@ int StudentWorld::move()
 		<< "  Infected: " << "?";
 	string stats = oss.str();
 	setGameStatText(stats);
-
 
 	  // the player hasn’t completed the current level and hasn’t died, so continue playing the current level
 	return GWSTATUS_CONTINUE_GAME;
