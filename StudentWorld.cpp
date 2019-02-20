@@ -3,9 +3,11 @@
 #include "GameConstants.h"
 #include "Level.h"
 
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <vector>
+
 using namespace std;
 
 
@@ -87,9 +89,6 @@ int StudentWorld::move()
 		return GWSTATUS_FINISHED_LEVEL;
 	
 	
-	// This code is here merely to allow the game to build, run, and terminate after you hit enter.
-    // Notice that the return value GWSTATUS_PLAYER_DIED will cause our framework to end the current level.
-    
 	penelope->doSomething();
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
@@ -99,7 +98,21 @@ int StudentWorld::move()
 
 
 
-	// the player hasn’t completed the current level and hasn’t died, so continue playing the current level
+	  // Update the game status line
+	ostringstream oss;
+	oss.fill('0');
+	oss << "Score: " << setw(6) << getScore()
+	    << "  Level: " << getLevel()
+		<< "  Lives: " << getLives()
+		<< "  Vacc:  " << "?"
+		<< "  Flames: " << "?"
+		<< "  Mines: " << "?"
+		<< "  Infected: " << "?";
+	string stats = oss.str();
+	setGameStatText(stats);
+
+
+	  // the player hasn’t completed the current level and hasn’t died, so continue playing the current level
 	return GWSTATUS_CONTINUE_GAME;
 }
 
