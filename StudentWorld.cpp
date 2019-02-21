@@ -10,7 +10,6 @@
 
 using namespace std;
 
-
 GameWorld* createStudentWorld(string assetPath)
 {
 	return new StudentWorld(assetPath);
@@ -23,11 +22,19 @@ StudentWorld::StudentWorld(string assetPath)
 {
 }
 
-int StudentWorld::init()
+StudentWorld::~StudentWorld()
 {
-	 
-	  //set completion status
+	cleanUp();
+}
+
+int StudentWorld::init()
+{	 
+	
+	  //restore initial values of private members
 	m_level_complete = false;
+	m_vaccines = 0;
+	m_flame_charges = 0;
+	m_landmines = 0;
 	  
 	  //initialize a level
 	Level level(assetPath());
@@ -57,9 +64,14 @@ int StudentWorld::init()
 						penelope = new Penelope(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 						break;
 					}
+					case Level::citizen:
+					{
+						Actor* citizen = new Citizen(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+						actors.push_back(citizen);
+						break;
+					}
 					case Level::wall:
 					{
-						
 						Actor* wall = new Wall(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 						actors.push_back(wall);
 						break;
@@ -76,6 +88,24 @@ int StudentWorld::init()
 						actors.push_back(pit);
 						break;
 					}
+					case Level::vaccine_goodie:
+					{
+						Actor* vaccine = new Vaccine_Goodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+						actors.push_back(vaccine);
+						break;
+					}
+					case Level::gas_can_goodie:
+					{
+						Actor* gas_can = new Gas_Can_Goodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+						actors.push_back(gas_can);
+						break;
+					}
+					case Level::landmine_goodie:
+					{
+						Actor* landmine = new Landmine_Goodie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+						actors.push_back(landmine);
+						break;
+					}
 				}
 			}
 	}
@@ -88,29 +118,51 @@ int StudentWorld::move()
 	if (m_level_complete == true)
 		return GWSTATUS_FINISHED_LEVEL;
 	
-	
+	if (penelope->isDead())
+		return GWSTATUS_PLAYER_DIED;
 	penelope->doSomething();
+	
+
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
-		(*it)->doSomething();
+		if (!(*it)->isDead())
+		{
+			(*it)->doSomething();
+		
+			if (penelope->isDead())
+			{
+				decLives();
+				return GWSTATUS_PLAYER_DIED;
+			}
+			if (m_level_complete == true)
+				return GWSTATUS_FINISHED_LEVEL;
+		}
 	}
 
-
+	  // Remove newly-dead actors after each tick
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+		if ((*it)->isDead())
+		{
+			delete *it;
+			actors.erase(it);
+			it = actors.begin();
+		}
+	}
 
 	  // Update the game status line
 	ostringstream oss;
 	oss.fill('0');
 	oss << "Score: " << setw(6) << getScore()
-	    << "  Level: " << getLevel()
+		<< "  Level: " << getLevel()
 		<< "  Lives: " << getLives()
-		<< "  Vacc:  " << "?"
-		<< "  Flames: " << "?"
-		<< "  Mines: " << "?"
+		<< "  Vacc:  " << getVaccines()
+		<< "  Flames: " << getFlameCharges()
+		<< "  Mines: " << getLandmines()
 		<< "  Infected: " << "?";
 	string stats = oss.str();
 	setGameStatText(stats);
-
 
 	  // the player hasn’t completed the current level and hasn’t died, so continue playing the current level
 	return GWSTATUS_CONTINUE_GAME;
@@ -118,7 +170,11 @@ int StudentWorld::move()
 
 void StudentWorld::cleanUp()
 {
-	delete penelope;
+	if (penelope != nullptr)
+	{
+		delete penelope;
+		penelope = nullptr;
+	}
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -200,8 +256,11 @@ bool StudentWorld::useExit(Actor* exit)
 bool StudentWorld::fallInPit(Actor* pit)
 {
 	if (penelope->canDie() && overlaps(penelope, pit, 10))
+	{
+		penelope->setDead();
 		return true;
-
+	}
+	
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -209,6 +268,17 @@ bool StudentWorld::fallInPit(Actor* pit)
 		if ((*it)->canDie() && overlaps(*it, pit, 10))
 			return true;
 
+	}
+	return false;
+
+}
+
+bool StudentWorld::pickUpGoodie(Goodie* goodie)
+{
+	if (overlaps(penelope, goodie, 10))
+	{
+		goodie->setDead();
+		return true;
 	}
 	return false;
 

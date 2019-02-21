@@ -8,8 +8,8 @@
 class Actor : public GraphObject
 {
   public:
-	  Actor(int imageID, double startX, double startY, Direction dir, StudentWorld* world,
-		    bool allow_overlap = false, bool can_use_exit = false, bool can_die = false, int depth = 0, double size = 1.0)
+	Actor(int imageID, double startX, double startY, Direction dir, StudentWorld* world,
+		  bool allow_overlap = false, bool can_use_exit = false, bool can_die = false, int depth = 0, double size = 1.0)
 	:GraphObject(imageID, startX, startY, dir, depth, size)
 	{
 		m_world = world;
@@ -26,9 +26,10 @@ class Actor : public GraphObject
 	bool allowsOverlap() const { return m_allow_overlap; }
 	bool canUseExits() const { return m_can_use_exit; }
 	bool canDie() const { return m_can_die; }
+	bool isDead() const { return m_is_dead; }
 	
 	  //mutators
-	bool setDead() { m_is_dead = true; }
+	void setDead() { m_is_dead = true; }
 	
 
   private:
@@ -37,10 +38,9 @@ class Actor : public GraphObject
 	bool m_can_use_exit;
 	bool m_can_die;
 	bool m_is_dead;
-
-
 };
  
+
   //TYPES OF ACTORS
 class Penelope : public Actor
 {
@@ -48,11 +48,33 @@ class Penelope : public Actor
 	Penelope(int start_x, int start_y, StudentWorld* world)
 	:Actor(IID_PLAYER, start_x, start_y, right, world, false, true, true)
 	{
-
+		//Actors:
+		// allow overlap = false
+		// can use exits = true
+		// can die = true
 	}
 	virtual void doSomething();
 	
 };
+
+
+class Citizen : public Actor
+{
+  public:
+	Citizen(int start_x, int start_y, StudentWorld* world)
+		:Actor(IID_CITIZEN, start_x, start_y, right, world, false, true, true)
+	{
+		//Citizen:
+		// allow overlap = false
+		// can use exits = true
+		// can die = true
+
+	}
+	virtual void doSomething() { return; }
+
+
+};
+
 
 class Wall : public Actor
 {
@@ -88,7 +110,7 @@ class Exit : public Actor
 
 class Pit : public Actor
 {
-public:
+  public:
 	Pit(int start_x, int start_y, StudentWorld* world)
 	:Actor(IID_PIT, start_x, start_y, right, world, true, false, false)
 	{
@@ -102,6 +124,56 @@ public:
 };
 
 
+  //GOODIE ABSTRACT BASE CLASS
+class Goodie : public Actor
+{
+  public:
+	  Goodie(int imageID, int start_x, int start_y, StudentWorld* world)
+	  :Actor(imageID, start_x, start_y, right, world, true, false, true, 1)
+	  {
+		  //Goodies:
+		  // allow overlap = true
+		  // can use exits = false
+		  // can die = true
+	  }
+	  virtual void doSomething() = 0;
+};
+
+  //TYPES OF GOODIES
+class Vaccine_Goodie : public Goodie
+{
+  public:
+	Vaccine_Goodie(int start_x, int start_y, StudentWorld* world)
+	:Goodie(IID_VACCINE_GOODIE, start_x, start_y, world)
+	{
+		
+	}
+	virtual void doSomething();
+};
+
+
+class Gas_Can_Goodie : public Goodie
+{
+  public: 
+	Gas_Can_Goodie(int start_x, int start_y, StudentWorld* world)
+	:Goodie(IID_GAS_CAN_GOODIE, start_x, start_y, world)
+	{
+	
+	}
+	virtual void doSomething();
+};
+
+
+class Landmine_Goodie : public Goodie
+{
+  public:
+	Landmine_Goodie(int start_x, int start_y, StudentWorld* world)
+	:Goodie(IID_LANDMINE_GOODIE, start_x, start_y, world)
+	{
+	
+	}
+	virtual void doSomething();
+};
 
 
 #endif // ACTOR_H_
