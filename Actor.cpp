@@ -67,7 +67,7 @@ void Exit::doSomething()
 	//determine if penelope overlaps
 	if (getWorld()->useExit(this))
 		getWorld()->setLevelCompletion(true);
-	
+
 }
 
 void Pit::doSomething()
@@ -77,3 +77,31 @@ void Pit::doSomething()
 		std::cout << "something is gonna fall in a pit" << std::endl;
 
 }
+
+void Vaccine_Goodie::doSomething()
+{
+	if (getWorld()->pickUpGoodie(this))
+	{
+		getWorld()->increaseScore(50);
+		getWorld()->addVaccine();
+	}
+}
+
+void Gas_Can_Goodie::doSomething()
+{
+	if (getWorld()->pickUpGoodie(this))
+	{
+		getWorld()->increaseScore(50);
+		getWorld()->addFlameCharges(5);
+	}
+}
+
+void Landmine_Goodie::doSomething()
+{
+	if (getWorld()->pickUpGoodie(this))
+	{
+		getWorld()->increaseScore(50);
+		getWorld()->addLandmines(2);
+	}
+}
+
