@@ -44,13 +44,19 @@ int StudentWorld::init()
 	string levelFile = oss.str();
 
 	Level::LoadResult result = level.loadLevel(levelFile);
-	if (result == Level::load_fail_file_not_found)
-		cerr << "Cannot find level01.txt data file" << endl;
+	if (result == Level::load_fail_file_not_found || getLevel() == 100)
+	{
+		cerr << "Cannot find " << levelFile << " data file" << endl;
+		return GWSTATUS_PLAYER_WON;
+	}
 	else if (result == Level::load_fail_bad_format)
+	{
 		cerr << "Your level was improperly formatted" << endl;
+		return GWSTATUS_LEVEL_ERROR;
+	}
 	else if (result == Level::load_success)
 	{
-		cerr << "Successfully loaded level" << endl;
+		cerr << "Successfully loaded " << levelFile << endl;
 		for (int x = 0; x < LEVEL_WIDTH; x++)
 			for (int y = 0; y < LEVEL_HEIGHT; y++)
 			{
@@ -110,6 +116,7 @@ int StudentWorld::init()
 			}
 	}
 
+	
 	return GWSTATUS_CONTINUE_GAME;
 }
 
@@ -179,10 +186,8 @@ void StudentWorld::cleanUp()
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
 		delete *it;
-		actors.erase(it);
-		it = actors.begin(); ///////////???check logic
 	}
-
+	actors.clear();
 }
 
 
@@ -283,3 +288,14 @@ bool StudentWorld::pickUpGoodie(Goodie* goodie)
 	return false;
 
 }
+/*
+bool StudentWorld::shootFlame(Actor* src)
+{
+	if (src == penelope)
+		if (getFlameCharges == 0)
+			return false;
+
+
+
+
+}*/

@@ -72,7 +72,6 @@ class Citizen : public Actor
 	}
 	virtual void doSomething() { return; }
 
-
 };
 
 
@@ -108,6 +107,7 @@ class Exit : public Actor
 
 };
 
+
 class Pit : public Actor
 {
   public:
@@ -122,6 +122,31 @@ class Pit : public Actor
 	virtual void doSomething();
 
 };
+
+class Flame : public Actor
+{
+  public:
+	  Flame(int start_x, int start_y, Direction dir, StudentWorld* world)
+	  :Actor(IID_FLAME, start_x, start_y, dir, world, true, false, true)
+	  {
+		//Flames:
+		// allow overlap = true
+	    // can use exits = false
+	    // can die = true
+	  }
+	  virtual void doSomething();
+	  int getTicks() { return m_ticks; }
+	  void decTicks() { m_ticks - 1; }
+
+  private:
+	  int m_ticks = 2;
+
+};
+
+
+
+
+
 
 
   //GOODIE ABSTRACT BASE CLASS
