@@ -58,6 +58,17 @@ void Penelope::doSomething()
 		
 				break;
 			}
+			case KEY_PRESS_SPACE:
+			{
+				double x = getX() + 16;
+				double y = getY();
+				if (!getWorld()->willCollideAt(x, y))
+				{
+					Actor* flame = new Flame(getX() + 16, getY(), getDirection(), getWorld());
+					getWorld()->addActor(flame);
+				}
+				break;
+			}
 		}
 	}
 }
@@ -77,6 +88,17 @@ void Pit::doSomething()
 		std::cout << "something is gonna fall in a pit" << std::endl;
 
 }
+
+void Flame::doSomething()
+{
+	//check if flame damagable object overlaps
+
+
+
+
+}
+
+
 
 void Vaccine_Goodie::doSomething()
 {

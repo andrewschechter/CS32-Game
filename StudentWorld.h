@@ -29,6 +29,7 @@ class StudentWorld : public GameWorld
 	bool useExit(Actor* exit);
 	bool fallInPit(Actor* pit);
 	bool StudentWorld::pickUpGoodie(Goodie* goodie);
+	//bool StudentWorld::shootFlame(Actor* src);
 	
 	  // Accessors
 	int getVaccines() { return m_vaccines; }
@@ -43,6 +44,7 @@ class StudentWorld : public GameWorld
 	void addVaccine() { m_vaccines++; }
 	void addFlameCharges(int n) { m_flame_charges += n; }
 	void addLandmines(int n) { m_landmines += n; }
+	void addActor(Actor* actor) { actors.push_back(actor); }
 
   private:
 	std::vector<Actor*> actors;
