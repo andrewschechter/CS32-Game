@@ -21,15 +21,16 @@ class StudentWorld : public GameWorld
     virtual void cleanUp();
 
 	  // Helper Functions
-	bool willCollideAt(double x, double y);
+	bool willCollideAt(double x, double y, bool projectile_exception = false);
 	double euclideanDistance(double x1, double y1, double x2, double y2) const;
 	bool overlaps(Actor* a1, Actor* a2, int threshold) const;
 	
 	  // Actor Abilities
 	bool useExit(Actor* exit);
 	bool fallInPit(Actor* pit);
-	bool StudentWorld::pickUpGoodie(Goodie* goodie);
-	//bool StudentWorld::shootFlame(Actor* src);
+	bool pickUpGoodie(Goodie* goodie);
+	//bool shootFlame(int x, int y, Direction dir, Actor* src);
+	bool hitByFlame(Actor* flame);
 	
 	  // Accessors
 	int getVaccines() { return m_vaccines; }
@@ -43,6 +44,7 @@ class StudentWorld : public GameWorld
 	}
 	void addVaccine() { m_vaccines++; }
 	void addFlameCharges(int n) { m_flame_charges += n; }
+	void decFlameCharges() { m_flame_charges--; }
 	void addLandmines(int n) { m_landmines += n; }
 	void addActor(Actor* actor) { actors.push_back(actor); }
 
