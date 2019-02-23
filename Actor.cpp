@@ -31,7 +31,7 @@ void Penelope::doSomething()
 				if (getWorld()->willCollideAt(newX, newY) == false)
 					moveTo(newX, newY);
 				
-				
+		
 				break;
 			}
 			case KEY_PRESS_UP:
@@ -60,14 +60,49 @@ void Penelope::doSomething()
 			}
 			case KEY_PRESS_SPACE:
 			{
-				double x = getX() + 16;
-				double y = getY();
-				if (!getWorld()->willCollideAt(x, y))
+				  
+				for (int i = 1; i < 4; i++)
 				{
-					Actor* flame = new Flame(getX() + 16, getY(), getDirection(), getWorld());
-					getWorld()->addActor(flame);
+					  //compute potential flame position
+					std::pair<double, double> posi; //potential position (x, y)
+					if (getDirection() == up)
+					{
+						posi.first = getX();
+						posi.second = getY() + i * SPRITE_HEIGHT;
+						  //check for collision with walls
+						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+							break;
+						Actor* flame = new Flame(posi.first, posi.second, getDirection(), getWorld());
+						getWorld()->addActor(flame);
+					}
+					else if (getDirection() == down)
+					{
+						posi.first = getX();
+						posi.second = getY() - i * SPRITE_HEIGHT;
+						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+							break;
+						Actor* flame = new Flame(posi.first, posi.second, getDirection(), getWorld());
+						getWorld()->addActor(flame);
+					}
+					else if (getDirection() == left)
+					{
+						posi.first = getX() - i * SPRITE_WIDTH;
+						posi.second = getY();
+						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+							break;
+						Actor* flame = new Flame(posi.first, posi.second, getDirection(), getWorld());
+						getWorld()->addActor(flame);
+					}
+					else if (getDirection() == right)
+					{
+						posi.first = getX() + i * SPRITE_WIDTH;
+						posi.second = getY();
+						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+							break;
+						Actor* flame = new Flame(posi.first, posi.second, getDirection(), getWorld());
+						getWorld()->addActor(flame);
+					}
 				}
-				break;
 			}
 		}
 	}
@@ -91,10 +126,15 @@ void Pit::doSomething()
 
 void Flame::doSomething()
 {
-	//check if flame damagable object overlaps
+	if (getTicks() == 0)
+	{
+		setDead();
+		return;
+	}
+	else
+		decTicks();
 
-
-
+	getWorld()->hitByFlame(this);
 
 }
 
@@ -127,3 +167,18 @@ void Landmine_Goodie::doSomething()
 	}
 }
 
+
+
+
+
+
+
+/*
+
+void Penelope::shootFlame()
+{
+
+
+
+
+}*/

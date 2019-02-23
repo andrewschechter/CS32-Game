@@ -40,7 +40,8 @@ int StudentWorld::init()
 	Level level(assetPath());
 
 	ostringstream oss;
-	oss << "level0" << getLevel() << ".txt";
+	oss.fill('0');
+	oss << "level" << setw(2) << getLevel() << ".txt";
 	string levelFile = oss.str();
 
 	Level::LoadResult result = level.loadLevel(levelFile);
@@ -192,7 +193,9 @@ void StudentWorld::cleanUp()
 
 
   // Helper Functions
-bool StudentWorld::willCollideAt(double new_x, double new_y) 
+
+//note: certain projectiles may allow collisions to occur on objects that otherwise don't allow overlap, hence a projectile exception is needed
+bool StudentWorld::willCollideAt(double new_x, double new_y, bool projectile_exception)
 {
 	  // new position's bounding box
 	double new_x_max = new_x + SPRITE_WIDTH - 1;
@@ -204,8 +207,16 @@ bool StudentWorld::willCollideAt(double new_x, double new_y)
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
 		Actor* curr_actor = *it; //set the current actor to the actor pointed to by the vector iterator
-		if (curr_actor->allowsOverlap() == true)
-			continue;
+		
+		if (projectile_exception)
+		{
+			if (curr_actor->canBeFlamed())
+				continue;
+		}
+		else
+			if (curr_actor->allowsOverlap())
+				continue;
+
 		   
 		  // current actor's bounding box
 		double obj_x = curr_actor->getX(); 
@@ -226,6 +237,11 @@ bool StudentWorld::willCollideAt(double new_x, double new_y)
 	}
 	return false;
 }
+
+
+
+
+
 
 double StudentWorld::euclideanDistance(double x1, double y1, double x2, double y2) const
 {
@@ -271,11 +287,36 @@ bool StudentWorld::fallInPit(Actor* pit)
 	{
 
 		if ((*it)->canDie() && overlaps(*it, pit, 10))
+		{
+			(*it)->setDead();
 			return true;
-
+		}
+		
 	}
 	return false;
 
+}
+
+bool StudentWorld::hitByFlame(Actor* flame)
+{
+	if (penelope->canBeFlamed() && overlaps(penelope, flame, 10))
+	{
+		penelope->setDead();
+		return true;
+	}
+
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+
+		if ((*it)->canBeFlamed() && overlaps(*it, flame, 10))
+		{
+			(*it)->setDead();
+			return true;
+		}
+	
+	}
+	return false;
 }
 
 bool StudentWorld::pickUpGoodie(Goodie* goodie)
@@ -288,12 +329,20 @@ bool StudentWorld::pickUpGoodie(Goodie* goodie)
 	return false;
 
 }
+
 /*
-bool StudentWorld::shootFlame(Actor* src)
-{
-	if (src == penelope)
+bool StudentWorld::shootFlame(int x, int y, Direction dir, Actor* src)
+{ 
+	if (src == penelope)  //possibly illegal!! maybe add a getFlameCharge to the actors class
 		if (getFlameCharges == 0)
-			return false;
+			return false;  
+		else
+		{
+
+
+			decFlameCharges();
+		}
+
 
 
 
