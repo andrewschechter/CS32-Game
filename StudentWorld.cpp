@@ -41,7 +41,7 @@ int StudentWorld::init()
 
 	ostringstream oss;
 	oss.fill('0');
-	oss << "level" << setw(2) << getLevel() << ".txt";
+	oss << "level" << setw(2) << getLevel()+2 << ".txt";
 	string levelFile = oss.str();
 
 	Level::LoadResult result = level.loadLevel(levelFile);
@@ -75,6 +75,18 @@ int StudentWorld::init()
 					{
 						Actor* citizen = new Citizen(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
 						actors.push_back(citizen);
+						break;
+					}
+					case Level::dumb_zombie:
+					{
+						Actor* dumb_zombie = new Dumb_Zombie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+						actors.push_back(dumb_zombie);
+						break;
+					}
+					case Level::smart_zombie:
+					{
+						Actor* smart_zombie = new Smart_Zombie(SPRITE_WIDTH * x, SPRITE_HEIGHT * y, this);
+						actors.push_back(smart_zombie);
 						break;
 					}
 					case Level::wall:
@@ -208,14 +220,17 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, bool projectile_exc
 	{
 		Actor* curr_actor = *it; //set the current actor to the actor pointed to by the vector iterator
 		
-		if (projectile_exception)
+		if (projectile_exception )
 		{
-			if (curr_actor->canBeFlamed())
+			if (!curr_actor->blocksFlames())
+			{
 				continue;
+			}
 		}
-		else
-			if (curr_actor->allowsOverlap())
-				continue;
+		else if(curr_actor->allowsOverlap())
+		{
+			continue;
+		}
 
 		   
 		  // current actor's bounding box
@@ -256,7 +271,7 @@ bool StudentWorld::overlaps(Actor* a1, Actor* a2, int threshold) const // thresh
 	return false;
 }
 
-  
+
   // Actor Abilities 
 bool StudentWorld::useExit(Actor* exit)
 {
@@ -276,7 +291,7 @@ bool StudentWorld::useExit(Actor* exit)
 
 bool StudentWorld::fallInPit(Actor* pit)
 {
-	if (penelope->canDie() && overlaps(penelope, pit, 10))
+	if (penelope->canFallInPit()  && overlaps(penelope, pit, 10))
 	{
 		penelope->setDead();
 		return true;
@@ -286,7 +301,7 @@ bool StudentWorld::fallInPit(Actor* pit)
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
 
-		if ((*it)->canDie() && overlaps(*it, pit, 10))
+		if ((*it)->canFallInPit() && overlaps(*it, pit, 10))
 		{
 			(*it)->setDead();
 			return true;
@@ -299,7 +314,7 @@ bool StudentWorld::fallInPit(Actor* pit)
 
 bool StudentWorld::hitByFlame(Actor* flame)
 {
-	if (penelope->canBeFlamed() && overlaps(penelope, flame, 10))
+	if (!penelope->blocksFlames() && penelope->canDieByFlames() && overlaps(penelope, flame, 10))
 	{
 		penelope->setDead();
 		return true;
@@ -309,7 +324,7 @@ bool StudentWorld::hitByFlame(Actor* flame)
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
 
-		if ((*it)->canBeFlamed() && overlaps(*it, flame, 10))
+		if ((*it)->canDieByFlames() && !(*it)->blocksFlames() && overlaps(*it, flame, 10))
 		{
 			(*it)->setDead();
 			return true;
@@ -317,6 +332,30 @@ bool StudentWorld::hitByFlame(Actor* flame)
 	
 	}
 	return false;
+}
+
+
+
+bool StudentWorld::triggerLandmine(Actor* landmine)
+{
+	if (penelope->canTriggerLandmine() && overlaps(penelope, landmine, 10))
+	{	
+		return true;
+	}
+
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+
+		if ((*it)->canTriggerLandmine() && overlaps(*it, landmine, 10))
+		{
+			return true;
+		}
+
+	}
+	return false;
+
+
 }
 
 bool StudentWorld::pickUpGoodie(Goodie* goodie)
@@ -330,21 +369,27 @@ bool StudentWorld::pickUpGoodie(Goodie* goodie)
 
 }
 
-/*
-bool StudentWorld::shootFlame(int x, int y, Direction dir, Actor* src)
-{ 
-	if (src == penelope)  //possibly illegal!! maybe add a getFlameCharge to the actors class
-		if (getFlameCharges == 0)
-			return false;  
-		else
-		{
+double StudentWorld::getDistanceToPenelope(Actor* src) const
+{
+	return euclideanDistance(penelope->getX(), penelope->getY(), src->getX(), src->getY());
+}
 
 
-			decFlameCharges();
-		}
+double StudentWorld::getDistanceToNearestZombie(Actor* src)
+{
+	double curr_minimum = 0;
 
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+		if (!(*it)->isZombie())
+			continue;
+		
+		double distance = euclideanDistance((*it)->getX(), (*it)->getY(), src->getX(), src->getY());
+		if (distance < curr_minimum)
+			curr_minimum = distance;
+	}
 
+	return curr_minimum;
 
-
-
-}*/
+}
