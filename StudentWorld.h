@@ -29,13 +29,15 @@ class StudentWorld : public GameWorld
 	bool useExit(Actor* exit);
 	bool fallInPit(Actor* pit);
 	bool pickUpGoodie(Goodie* goodie);
-	//bool shootFlame(int x, int y, Direction dir, Actor* src);
 	bool hitByFlame(Actor* flame);
+	bool triggerLandmine(Actor* landmine);
 	
 	  // Accessors
-	int getVaccines() { return m_vaccines; }
-	int getFlameCharges() { return m_flame_charges; }
-	int getLandmines() { return m_landmines; }
+	int getVaccines() const { return m_vaccines; }
+	int getFlameCharges() const { return m_flame_charges; }
+	int getLandmines() const { return m_landmines; }
+	double getDistanceToPenelope(Actor* src) const;
+	double getDistanceToNearestZombie(Actor* src);
 	
 	  // Mutators
 	void setLevelCompletion(bool completion_status) 
@@ -46,7 +48,11 @@ class StudentWorld : public GameWorld
 	void addFlameCharges(int n) { m_flame_charges += n; }
 	void decFlameCharges() { m_flame_charges--; }
 	void addLandmines(int n) { m_landmines += n; }
+	void decLandmines() { m_landmines--; }
 	void addActor(Actor* actor) { actors.push_back(actor); }
+
+
+
 
   private:
 	std::vector<Actor*> actors;
