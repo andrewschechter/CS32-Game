@@ -34,6 +34,20 @@ StudentWorld::~StudentWorld()
 	cleanUp();
 }
 
+int StudentWorld::getPlayerRow() const
+{
+	return penelope->getY() / SPRITE_HEIGHT;
+}
+int StudentWorld::getPlayerCol() const
+{
+	return penelope->getX() / SPRITE_WIDTH;
+}
+
+int StudentWorld::getInfectionCount() const
+{
+	return penelope->getInfectionCount();
+}
+
 int StudentWorld::init()
 {	 
 	
@@ -142,6 +156,7 @@ int StudentWorld::init()
 
 int StudentWorld::move()
 {
+	
 	if (m_level_complete == true)
 		return GWSTATUS_FINISHED_LEVEL;
 	
@@ -187,7 +202,7 @@ int StudentWorld::move()
 		<< "  Vacc:  " << getVaccines()
 		<< "  Flames: " << getFlameCharges()
 		<< "  Mines: " << getLandmines()
-		<< "  Infected: " << "?";
+		<< "  Infected: " << getInfectionCount();
 	string stats = oss.str();
 	setGameStatText(stats);
 
@@ -233,7 +248,7 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool pr
 		double obj_y_max = obj_y + SPRITE_HEIGHT - 1;
 
 		
-		if (euclideanDistance(new_x, new_y, penelope->getX(), penelope->getY()) < 16)
+		if (euclideanDistance(new_x, new_y, penelope->getX(), penelope->getY()) < SPRITE_WIDTH)
 			return true;
 
 		
@@ -265,7 +280,7 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool pr
 		
 		if (projectile_exception)
 		{
-			if (!curr_actor->blocksFlames())
+			if (!curr_actor->blocksFlames() || !curr_actor->blocksVomit())
 			{
 				continue;
 			}
@@ -275,7 +290,7 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool pr
 			continue;
 		}
 
-		if(euclideanDistance(new_x, new_y, (*it)->getX(), (*it)->getY()) < 16)
+		if(euclideanDistance(new_x, new_y, (*it)->getX(), (*it)->getY()) < SPRITE_WIDTH)
 			return true;
 		
 
@@ -389,7 +404,7 @@ bool StudentWorld::hitByFlame(Actor* flame)
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
 
-		if ((*it)->canDieByFlames() && !(*it)->blocksFlames() && overlaps(*it, flame, 10))
+		if (!(*it)->blocksFlames() && (*it)->canDieByFlames() && overlaps(*it, flame, 10))
 		{
 			(*it)->setDead();
 			return true;
@@ -397,6 +412,28 @@ bool StudentWorld::hitByFlame(Actor* flame)
 	
 	}
 	return false;
+}
+
+bool StudentWorld::hitByVomit(Actor* vomit)
+{
+	if (!penelope->blocksVomit() && penelope->canBeInfectedByVomit() && overlaps(penelope, vomit, 10))
+	{
+		penelope->setInfected();
+		return true;
+	}
+
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+
+		if (!(*it)->blocksVomit() && (*it)->canBeInfectedByVomit() && overlaps(*it, vomit, 10))
+		{
+			(*it)->setInfected();
+			return true;
+		}
+	}
+	return false;
+
 }
 
 
@@ -441,7 +478,7 @@ double StudentWorld::getDistanceToPenelope(Actor* src) const
 }
 
 
-double StudentWorld::getDistanceToNearestZombieAt(double x, double y)
+double StudentWorld::getDistanceToNearestZombieAt(double src_x, double src_y)
 {
 	double curr_minimum = VIEW_WIDTH * VIEW_WIDTH + VIEW_HEIGHT * VIEW_HEIGHT;
 
@@ -451,7 +488,7 @@ double StudentWorld::getDistanceToNearestZombieAt(double x, double y)
 		if (!(*it)->isZombie())
 			continue;
 		
-		double distance = euclideanDistance((*it)->getX(), (*it)->getY(), x, y);
+		double distance = euclideanDistance((*it)->getX(), (*it)->getY(), src_x, src_y);
 		if (distance < curr_minimum)
 			curr_minimum = distance;
 	}
@@ -459,14 +496,41 @@ double StudentWorld::getDistanceToNearestZombieAt(double x, double y)
 	return curr_minimum;
 }
 
-
-int StudentWorld::getPlayerRow() const 
-{ 
-	return penelope->getY() / SPRITE_HEIGHT;
-}
-int StudentWorld::getPlayerCol() const
+void StudentWorld::getNearestZombieTargetAt(double src_x, double src_y, double& target_x, double& target_y, double& target_distance)
 {
-	return penelope->getX() / SPRITE_WIDTH;
+	double curr_minimum = VIEW_WIDTH * VIEW_WIDTH + VIEW_HEIGHT * VIEW_HEIGHT;
+
+	if (penelope->isZombieTarget())
+	{
+		double distance = euclideanDistance(penelope->getX(), penelope->getY(), src_x, src_y);
+		if (distance < curr_minimum)
+		{
+			curr_minimum = distance;
+			target_x = penelope->getX();
+			target_y = penelope->getY();
+		}
+	}
+	
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+		if (!(*it)->isZombieTarget())
+			continue;
+
+		double distance = euclideanDistance((*it)->getX(), (*it)->getY(), src_x, src_y);
+		if (distance < curr_minimum)
+		{
+			curr_minimum = distance;
+			target_x = (*it)->getX();
+			target_y = (*it)->getY();
+		}
+	}
+
 }
+
+
+
+
+
 
 

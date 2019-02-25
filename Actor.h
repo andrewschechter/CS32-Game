@@ -15,24 +15,32 @@ class Actor : public GraphObject
 	}
 	
 	virtual void doSomething() = 0;
+	
 	 
 	  //accessors
 	StudentWorld* getWorld() const { return m_world; }
+	virtual int getInfectionCount() const { return m_infection_count; }
+	
+	  //privileges, statuses, and properties
 	virtual bool allowsOverlap() const { return m_allow_overlap; }
 	virtual bool canUseExits() const { return m_can_use_exit; }
 	virtual bool blocksFlames() const { return m_blocks_flames; }
+	virtual bool blocksVomit() const { return m_blocks_vomit; }
 	virtual bool canFallInPit() const { return m_can_fall_in_pit; }
 	virtual bool canTriggerLandmine() const { return m_can_trigger_landmine; }
 	virtual bool canTriggerInactiveLandmine() { return m_can_trigger_inactive_landmine; }
 	virtual bool canDie() const { return m_can_die; }
 	virtual bool canDieByFlames() const { return m_can_die_by_flames; }
+	virtual bool canBeInfectedByVomit() const { return m_can_be_infected_by_vomit; }
 	virtual bool isZombie() const { return m_is_zombie; }
-	
-	bool isDead() const { return m_is_dead; }
+	virtual bool isZombieTarget() const { return m_is_zombie_target; }
+	        bool isDead() const { return m_is_dead; }
+	        bool isInfected() const { return m_is_infected; }
 
 	
 	  //mutators
 	void setDead() { m_is_dead = true; }
+	void setInfected() { m_is_infected = true; }
 	
 
   private:
@@ -44,9 +52,14 @@ class Actor : public GraphObject
 	bool m_can_trigger_inactive_landmine = false;
 	bool m_can_die = false;
 	bool m_blocks_flames = false;
+	bool m_blocks_vomit = false;
 	bool m_can_die_by_flames = false;
+	bool m_can_be_infected_by_vomit = false;
+	bool m_is_infected = false;
 	bool m_is_dead = false;
 	bool m_is_zombie = false;
+	bool m_is_zombie_target = false;
+	int m_infection_count = 0;
 };
 
  
@@ -66,11 +79,23 @@ class Agent : public Actor
 	virtual bool canDieByFlames() const { return m_can_die_by_flames; }
 
 
+  protected:
+	virtual Direction getVerticalDirectionToAgent(int src_row, int target_row)
+	{
+		return (src_row > target_row) ? down : up;
+	}
+	virtual Direction getHorizontalDirectionToAgent(int src_col, int target_col)
+	{
+		return (src_col > target_col) ? left : right;
+	}
+
+
   private:
 	bool m_can_fall_in_pit = true;
 	bool m_can_trigger_landmine = true;
 	bool m_can_die = true;
 	bool m_can_die_by_flames = true;
+	
 };
 
 
@@ -85,11 +110,18 @@ class Human : public Agent
 	}
 	
 	virtual bool canUseExits() const { return m_can_use_exit; }
+	virtual bool isZombieTarget() const { return m_is_zombie_target; }
+	virtual bool canBeInfectedByVomit() const { return m_can_be_infected_by_vomit; }
+
+protected:
+	virtual void incInfectionCount() = 0; 
+
 
   private:
 	bool m_can_use_exit = true;
-
-
+	bool m_is_zombie_target = true;
+	bool m_can_be_infected_by_vomit = true;
+	
 };
 
 
@@ -105,6 +137,12 @@ class Penelope : public Human
 	int getFlameCharges() { return getWorld()->getFlameCharges(); }
 	int getLandMines() { return getWorld()->getLandmines(); }
 	void shootFlame(double src_x, double src_y, Direction dir);
+	virtual int getInfectionCount() const { return m_infection_count; }
+	virtual void incInfectionCount() { m_infection_count++; }
+	
+
+  private:
+	int m_infection_count = 0;
 
 
 };
@@ -126,8 +164,10 @@ class Citizen : public Human
 
 	}
 	virtual void doSomething();
+	virtual int getInfectionCount() const { return m_infection_count; }
+	virtual void incInfectionCount() { m_infection_count++; }
 
-private:
+  private:
 	Direction getVerticalDirToPenelope(int src_row)
 	{
 		return (src_row > getWorld()->getPlayerRow()) ? down : up;
@@ -138,9 +178,9 @@ private:
 		return (src_col > getWorld()->getPlayerCol()) ? left : right;
 
 	}
-	//bool attemptToMoveTowardsPenelope(Direction dir);
-	//void Citizen::attemptToMoveAwayFromZombie(double dist_nearest_z);
 	bool canMoveInDirection(Direction dir, std::pair<double, double>& new_pos);
+	bool paralyzed = false;
+	int m_infection_count = 0;
 
 };
 
@@ -155,6 +195,15 @@ class Zombie : public Agent
 	  }
 	  virtual void doSomething() = 0;
 	  virtual bool isZombie() const { return m_is_zombie; }
+  
+  protected:
+	Direction getRandomDir() const;
+	void getNewDestination();
+	
+	virtual void decMovementPlanDistance() = 0;
+	virtual void setMovementPlanDistance(int n) = 0;
+	  
+
   private:
 	bool m_is_zombie = true;
 
@@ -169,7 +218,16 @@ class Smart_Zombie : public Zombie
 
 
     }
-	virtual void doSomething() { return; }
+	
+	virtual void doSomething();
+	virtual void decMovementPlanDistance() { movement_plan_distance--; }
+	virtual void setMovementPlanDistance(int n) { movement_plan_distance = n; }
+
+	void getNewMovementPlan();
+
+  private:
+	  bool paralyzed = false;
+	  int movement_plan_distance = 0;
 
 };
 
@@ -183,8 +241,15 @@ class Dumb_Zombie : public Zombie
 
 
 	}
-	virtual void doSomething() { return; }
+	virtual void doSomething();
+	virtual void decMovementPlanDistance() { movement_plan_distance--; }
+	virtual void setMovementPlanDistance(int n) { movement_plan_distance = n; }
+	
+	void getNewMovementPlan();
 
+  private: 
+	  bool paralyzed = false;
+	  int movement_plan_distance = 0;
 
 };
 
@@ -199,9 +264,11 @@ class Wall : public Actor
 	virtual void doSomething() { return; } //walls don't do anything
 
 	virtual bool blocksFlames() { return m_blocks_flames; }
+	virtual bool blocksVomit() const { return m_blocks_vomit; }
 
   private:
 	bool m_blocks_flames = true;
+	bool m_blocks_vomit = true;
 };
 
 
@@ -239,8 +306,11 @@ class Exit : public Activating_Object
 	}
 	virtual void doSomething();
 	virtual bool blocksFlames() { return m_blocks_flames; }
+	virtual bool blocksVomit() { return m_blocks_vomit; }
+	
   private:
 	  bool m_blocks_flames = true;
+	  bool m_blocks_vomit = true;
 
 
 };
@@ -324,6 +394,27 @@ class Flame : public Activating_Object
 	  bool m_can_trigger_inactive_landmine = true;
 
 };
+
+class Vomit : public Activating_Object
+{
+  public:
+	  Vomit(int start_x, int start_y, Direction dir, StudentWorld* world)
+	  :Activating_Object(IID_VOMIT, start_x, start_y, world, dir)
+	  {
+
+	  }
+	  virtual void doSomething();
+	  virtual bool canDie() { return m_can_die; }
+
+	  int getTicks() { return m_ticks; }
+	  void decTicks() { m_ticks -= 1; }
+
+  private:
+	  int m_ticks = 2;
+	  bool m_can_die = true;
+	 
+};
+
 
 
 
