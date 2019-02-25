@@ -33,18 +33,20 @@ class StudentWorld : public GameWorld
 	bool fallInPit(Actor* pit);
 	bool pickUpGoodie(Goodie* goodie);
 	bool hitByFlame(Actor* flame);
+	bool hitByVomit(Actor* vomit);
 	bool triggerLandmine(Actor* landmine);
 	
 	  // Accessors
 	int getVaccines() const { return m_vaccines; }
 	int getFlameCharges() const { return m_flame_charges; }
 	int getLandmines() const { return m_landmines; }
+	int getInfectionCount() const;
 	double getDistanceToPenelope(Actor* src) const;
-	double getDistanceToNearestZombieAt(double x, double y);
+	double getDistanceToNearestZombieAt(double src_x, double src_y);
+	void getNearestZombieTargetAt(double src_x, double src_y, double& target_x, double& target_y, double& target_distance);
 	int getPlayerRow() const;
 	int getPlayerCol() const;
-	//int getPlayerX() const { return penelope->getX(); }
-	//int getPlayerY() const { return penelope->getY(); }
+
 
 	
 
