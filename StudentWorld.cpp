@@ -10,6 +10,11 @@
 
 using namespace std;
 
+
+
+
+
+
 GameWorld* createStudentWorld(string assetPath)
 {
 	return new StudentWorld(assetPath);
@@ -20,7 +25,9 @@ GameWorld* createStudentWorld(string assetPath)
 StudentWorld::StudentWorld(string assetPath)
 : GameWorld(assetPath)
 {
+	penelope = nullptr;
 }
+
 
 StudentWorld::~StudentWorld()
 {
@@ -204,15 +211,48 @@ void StudentWorld::cleanUp()
 }
 
 
-  // Helper Functions
+  // Helper Function
 
 //note: certain projectiles may allow collisions to occur on objects that otherwise don't allow overlap, hence a projectile exception is needed
-bool StudentWorld::willCollideAt(double new_x, double new_y, bool projectile_exception)
+bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool projectile_exception)
 {
-	  // new position's bounding box
+	 // new position's bounding box
 	double new_x_max = new_x + SPRITE_WIDTH - 1;
 	double new_y_max = new_y + SPRITE_HEIGHT - 1;
 	
+
+
+
+	if (!penelope->allowsOverlap() && src != penelope)
+	{
+
+		// current actor's bounding box
+		double obj_x = penelope->getX();
+		double obj_y = penelope->getY();
+		double obj_x_max = obj_x + SPRITE_WIDTH - 1;
+		double obj_y_max = obj_y + SPRITE_HEIGHT - 1;
+
+		
+		if (euclideanDistance(new_x, new_y, penelope->getX(), penelope->getY()) < 16)
+			return true;
+
+		
+		
+		
+		
+		/*
+		/
+		// check each of the new bounding box and see if it is within the current actor's bounding box
+		if ((new_x >= obj_x && new_x < obj_x_max) && (new_y >= obj_y && new_y < obj_y_max))
+			return true;
+		else if ((new_x_max >= obj_x && new_x_max < obj_x + SPRITE_WIDTH - 1) && (new_y_max >= obj_y && new_y_max < obj_y_max))
+			return true;
+		else if ((new_x_max >= obj_x && new_x_max < obj_x + SPRITE_WIDTH - 1) && (new_y >= obj_y && new_y < obj_y_max))
+			return true;
+		else if ((new_x >= obj_x && new_x < obj_x_max) && (new_y_max >= obj_y && new_y_max < obj_y_max))
+			return true;*/
+
+	}
 	  // for each actor that doesn't allow overlap, 
 	  //check if it's bouding box would overlap with the hypothetical bounding box created at the new x, y
 	vector<Actor*>::iterator it;
@@ -220,7 +260,10 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, bool projectile_exc
 	{
 		Actor* curr_actor = *it; //set the current actor to the actor pointed to by the vector iterator
 		
-		if (projectile_exception )
+		if (src == *it)
+			continue;
+		
+		if (projectile_exception)
 		{
 			if (!curr_actor->blocksFlames())
 			{
@@ -232,8 +275,16 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, bool projectile_exc
 			continue;
 		}
 
+		if(euclideanDistance(new_x, new_y, (*it)->getX(), (*it)->getY()) < 16)
+			return true;
+		
+
+
+
+
+
 		   
-		  // current actor's bounding box
+		 /* // current actor's bounding box
 		double obj_x = curr_actor->getX(); 
 		double obj_y = curr_actor->getY();
 		double obj_x_max = obj_x + SPRITE_WIDTH - 1;
@@ -247,10 +298,18 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, bool projectile_exc
 		else if ((new_x_max >= obj_x && new_x_max < obj_x + SPRITE_WIDTH - 1) && (new_y >= obj_y && new_y < obj_y_max))
 			return true;
 		else if ((new_x >= obj_x && new_x < obj_x_max) && (new_y_max >= obj_y && new_y_max < obj_y_max))
-			return true;
+			return true;*/
 			
 	}
 	return false;
+
+
+
+
+
+
+
+
 }
 
 
@@ -261,12 +320,18 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, bool projectile_exc
 double StudentWorld::euclideanDistance(double x1, double y1, double x2, double y2) const
 {
 	//calculate the euclideanDistance between any two points D^2 = (dX)^2 + (dy)^2 
-	return ((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1));
+	x1 += SPRITE_WIDTH / 2;
+	x2 += SPRITE_WIDTH / 2;
+
+	y1 += SPRITE_HEIGHT / 2;
+	y2 += SPRITE_HEIGHT / 2;
+	
+	return sqrt(((x2 - x1) * (x2 - x1)) + ((y2 - y1) * (y2 - y1)));
 }
 
 bool StudentWorld::overlaps(Actor* a1, Actor* a2, int threshold) const // threshold is min separation in pixels
 {	
-	if (euclideanDistance(a1->getX(), a1->getY(), a2->getX(), a2->getY()) <= threshold*threshold)
+	if (euclideanDistance(a1->getX(), a1->getY(), a2->getX(), a2->getY()) <= threshold)
 		return true;
 	return false;
 }
@@ -372,12 +437,13 @@ bool StudentWorld::pickUpGoodie(Goodie* goodie)
 double StudentWorld::getDistanceToPenelope(Actor* src) const
 {
 	return euclideanDistance(penelope->getX(), penelope->getY(), src->getX(), src->getY());
+	
 }
 
 
-double StudentWorld::getDistanceToNearestZombie(Actor* src)
+double StudentWorld::getDistanceToNearestZombieAt(double x, double y)
 {
-	double curr_minimum = 0;
+	double curr_minimum = VIEW_WIDTH * VIEW_WIDTH + VIEW_HEIGHT * VIEW_HEIGHT;
 
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
@@ -385,11 +451,22 @@ double StudentWorld::getDistanceToNearestZombie(Actor* src)
 		if (!(*it)->isZombie())
 			continue;
 		
-		double distance = euclideanDistance((*it)->getX(), (*it)->getY(), src->getX(), src->getY());
+		double distance = euclideanDistance((*it)->getX(), (*it)->getY(), x, y);
 		if (distance < curr_minimum)
 			curr_minimum = distance;
 	}
 
 	return curr_minimum;
-
 }
+
+
+int StudentWorld::getPlayerRow() const 
+{ 
+	return penelope->getY() / SPRITE_HEIGHT;
+}
+int StudentWorld::getPlayerCol() const
+{
+	return penelope->getX() / SPRITE_WIDTH;
+}
+
+

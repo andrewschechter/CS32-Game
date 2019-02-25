@@ -114,7 +114,7 @@ class Citizen : public Human
 {
   public:
 	Citizen(int start_x, int start_y, StudentWorld* world)
-		:Human(IID_CITIZEN, start_x, start_y, world)
+	:Human(IID_CITIZEN, start_x, start_y, world)
 	{
 		//Citizen:
 		// allow overlap = false
@@ -126,6 +126,21 @@ class Citizen : public Human
 
 	}
 	virtual void doSomething();
+
+private:
+	Direction getVerticalDirToPenelope(int src_row)
+	{
+		return (src_row > getWorld()->getPlayerRow()) ? down : up;
+	}
+
+	Direction getHorizontalDirToPenelope(int src_col)
+	{
+		return (src_col > getWorld()->getPlayerCol()) ? left : right;
+
+	}
+	//bool attemptToMoveTowardsPenelope(Direction dir);
+	//void Citizen::attemptToMoveAwayFromZombie(double dist_nearest_z);
+	bool canMoveInDirection(Direction dir, std::pair<double, double>& new_pos);
 
 };
 

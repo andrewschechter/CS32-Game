@@ -6,6 +6,7 @@
   //doSomething() IMPLEMENTATIONS
 void Penelope::doSomething()
 {
+	
 	int ch;
 	if (getWorld()->getKey(ch))
 	{
@@ -17,8 +18,9 @@ void Penelope::doSomething()
 				double newX = getX() - 4;
 				double newY = getY();
 
-				if(getWorld()->willCollideAt(newX, newY) == false)
+				if(getWorld()->willCollideAt(newX, newY, this) == false)
 					moveTo(newX, newY);
+
 				break;
 			}
 			case KEY_PRESS_RIGHT:
@@ -27,7 +29,7 @@ void Penelope::doSomething()
 				double newX = getX() + 4;
 				double newY = getY();
 
-				if (getWorld()->willCollideAt(newX, newY) == false)
+				if (getWorld()->willCollideAt(newX, newY, this) == false)
 					moveTo(newX, newY);
 				break;
 			}
@@ -37,7 +39,7 @@ void Penelope::doSomething()
 				double newX = getX();
 				double newY = getY() + 4;
 				
-				if (getWorld()->willCollideAt(newX, newY) == false)
+				if (getWorld()->willCollideAt(newX, newY, this) == false)
 					moveTo(newX, newY);
 				break;
 			}
@@ -47,7 +49,7 @@ void Penelope::doSomething()
 				double newX = getX();
 				double newY = getY() - 4;
 
-				if (getWorld()->willCollideAt(newX, newY) == false)
+				if (getWorld()->willCollideAt(newX, newY, this) == false)
 					moveTo(newX, newY);
 				break;
 			}
@@ -58,40 +60,40 @@ void Penelope::doSomething()
 				
 				for (int i = 1; i <= 3; i++)
 				{
-					  //compute potential flame position
-					std::pair<double, double> posi; //potential position (x, y)
+					  //compute potential flame new_postion
+					std::pair<double, double> new_pos; //potential new_postion (x, y)
 					if (getDirection() == up)
 					{
-						posi.first = getX();
-						posi.second = getY() + i * SPRITE_HEIGHT;
+						new_pos.first = getX();
+						new_pos.second = getY() + i * SPRITE_HEIGHT;
 						  //check for collision with walls
-						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+						if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this, true))
 							break;
-						shootFlame(posi.first, posi.second, getDirection());
+						shootFlame(new_pos.first, new_pos.second, getDirection());
 					}
 					else if (getDirection() == down)
 					{
-						posi.first = getX();
-						posi.second = getY() - i * SPRITE_HEIGHT;
-						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+						new_pos.first = getX();
+						new_pos.second = getY() - i * SPRITE_HEIGHT;
+						if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this, true))
 							break;
-						shootFlame(posi.first, posi.second, getDirection());
+						shootFlame(new_pos.first, new_pos.second, getDirection());
 					}
 					else if (getDirection() == left)
 					{
-						posi.first = getX() - i * SPRITE_WIDTH;
-						posi.second = getY();
-						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+						new_pos.first = getX() - i * SPRITE_WIDTH;
+						new_pos.second = getY();
+						if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this, true))
 							break;
-						shootFlame(posi.first, posi.second, getDirection());
+						shootFlame(new_pos.first, new_pos.second, getDirection());
 					}
 					else if (getDirection() == right)
 					{
-						posi.first = getX() + i * SPRITE_WIDTH;
-						posi.second = getY();
-						if (getWorld()->willCollideAt(posi.first, posi.second, true))
+						new_pos.first = getX() + i * SPRITE_WIDTH;
+						new_pos.second = getY();
+						if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this, true))
 							break;
-						shootFlame(posi.first, posi.second, getDirection());
+						shootFlame(new_pos.first, new_pos.second, getDirection());
 					}
 				}
 				getWorld()->decFlameCharges();
@@ -102,7 +104,7 @@ void Penelope::doSomething()
 				//if(getLandMines() == 0)
 					//break;
 
-				Actor* landmine = new Landmine(getX() + 16, getY() + 16, getWorld());
+				Actor* landmine = new Landmine(getX(), getY(), getWorld());
 				getWorld()->addActor(landmine);
 				getWorld()->decLandmines();
 				break;
@@ -113,14 +115,240 @@ void Penelope::doSomething()
 
 void Citizen::doSomething()
 {
+	
 	double dist_p = getWorld()->getDistanceToPenelope(this);
-	double dist_z = getWorld()->getDistanceToNearestZombie(this);
+	double dist_z = getWorld()->getDistanceToNearestZombieAt(this->getX(), this->getY());
 
 
+	if ((dist_z == -1 || dist_p < dist_z) && dist_p <= 80)
+	{
+		
+		int citizen_row = getY() / SPRITE_HEIGHT;
+		int citizen_col = getX() / SPRITE_WIDTH;
+
+		std::pair<double, double> new_pos;
 
 
+		if (citizen_row == getWorld()->getPlayerRow())
+		{
+			Direction dir = getHorizontalDirToPenelope(citizen_col);
+			if (canMoveInDirection(dir, new_pos))
+			{
+				setDirection(dir);
+				moveTo(new_pos.first, new_pos.second);
+				return;
+			}
+		}	
+		else if(citizen_col == getWorld()->getPlayerCol())
+		{
+			Direction dir = getVerticalDirToPenelope(citizen_row);
+			if (canMoveInDirection(dir, new_pos))
+			{
+				setDirection(dir);
+				moveTo(new_pos.first, new_pos.second);
+				return;
+			}
+		}
+		else //citizen and penelope are not on the same row or col
+		{
+			Direction dir_0 = getVerticalDirToPenelope(citizen_row); //dir 0
+			Direction dir_1 = getHorizontalDirToPenelope(citizen_col);  //dir 1
+			int choose_dir = randInt(0, 1);
+			if (choose_dir == 0)
+			{
+				if (canMoveInDirection(dir_0, new_pos))
+				{
+					setDirection(dir_0);
+					moveTo(new_pos.first, new_pos.second);
+					return;
+				}
+				else if (canMoveInDirection(dir_1, new_pos))
+				{
+					setDirection(dir_1);
+					moveTo(new_pos.first, new_pos.second);
+					return;
+				}
+			}
+			else if (choose_dir == 1)
+			{
+				if (canMoveInDirection(dir_0, new_pos))
+				{
+					setDirection(dir_0);
+					moveTo(new_pos.first, new_pos.second);
+					return;
+				}
+				else if (canMoveInDirection(dir_1, new_pos))
+				{
+					setDirection(dir_1);
+					moveTo(new_pos.first, new_pos.second);
+					return;
+				}
+			}
+		}
+	}
+	else if (dist_z <= 80)
+	{
+		
+		std::pair<double, double> new_pos;     // new final position x, y
+		std::pair<double, double> pot_new_pos; //potential new position x, y
+		double new_dist_z = dist_z;
+		Direction new_dir;
+		if (canMoveInDirection(up, pot_new_pos))
+		{	
+			double pot_new_dist_z = getWorld()->getDistanceToNearestZombieAt(pot_new_pos.first, pot_new_pos.second);
+			if (pot_new_dist_z > new_dist_z)
+			{
+			
+				new_dist_z = pot_new_dist_z;
+				new_pos.first = pot_new_pos.first;
+				new_pos.second = pot_new_pos.second;
+				new_dir = up;
+			}
+		}
+		if (canMoveInDirection(right, pot_new_pos))
+		{	
+			double pot_new_dist_z = getWorld()->getDistanceToNearestZombieAt(pot_new_pos.first, pot_new_pos.second);
+			if (pot_new_dist_z > new_dist_z)
+			{
+
+				new_dist_z = pot_new_dist_z;
+				new_pos.first = pot_new_pos.first;
+				new_pos.second = pot_new_pos.second;
+				new_dir = right;
+			}
+		}
+		if (canMoveInDirection(left, pot_new_pos))
+		{		
+			double pot_new_dist_z = getWorld()->getDistanceToNearestZombieAt(pot_new_pos.first, pot_new_pos.second);
+			if (pot_new_dist_z > new_dist_z)
+			{
+				new_dist_z = pot_new_dist_z;
+				new_pos.first = pot_new_pos.first;
+				new_pos.second = pot_new_pos.second;
+				new_dir = left;
+			}
+		}
+		if (canMoveInDirection(down, pot_new_pos))
+		{
+			double pot_new_dist_z = getWorld()->getDistanceToNearestZombieAt(pot_new_pos.first, pot_new_pos.second);
+			if (pot_new_dist_z > new_dist_z)
+			{
+				new_dist_z = pot_new_dist_z;
+				new_pos.first = pot_new_pos.first;
+				new_pos.second = pot_new_pos.second;
+				new_dir = down;
+			}
+		}
+		if (new_dist_z > dist_z)
+		{
+			setDirection(new_dir);
+			moveTo(new_pos.first, new_pos.second);
+		}
+		else
+			return;
+	}
 }
 
+
+/*
+bool Citizen::attemptToMoveTowardsPenelope(Direction dir)
+{
+	//compute potential new_postion to move to
+	std::pair<double, double> new_pos; //potential new_postion (x, y)
+	switch (dir)
+	{
+		case up:
+		{
+			new_pos.first = getX();
+			new_pos.second = getY() + 2;
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			setDirection(dir);
+			moveTo(new_pos.first, new_pos.second);
+			break;
+		}
+		case down:
+		{
+			new_pos.first = getX();
+			new_pos.second = getY() - 2;
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			setDirection(dir);
+			moveTo(new_pos.first, new_pos.second);
+			break;
+		}
+		case left:
+		{
+			new_pos.first = getX() - 2;
+			new_pos.second = getY();
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			setDirection(dir);
+			moveTo(new_pos.first, new_pos.second);
+			break;
+		}
+		case right:
+		{
+			new_pos.first = getX() + 2;
+			new_pos.second = getY();
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			setDirection(dir);
+			moveTo(new_pos.first, new_pos.second);
+			break;
+		}
+	}
+	return true;
+}*/
+
+bool Citizen::canMoveInDirection(Direction dir, std::pair<double,double>& new_pos)
+{
+	//compute potential new_postion to move to
+	switch (dir)
+	{
+		case up:
+		{
+			new_pos.first = getX();
+			new_pos.second = getY() + 2;
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			break;
+		}
+		case down:
+		{
+			new_pos.first = getX();
+			new_pos.second = getY() - 2;
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			break;
+		}
+		case left:
+		{
+			new_pos.first = getX() - 2;
+			new_pos.second = getY();
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			break;
+		}
+		case right:
+		{
+			new_pos.first = getX() + 2;
+			new_pos.second = getY();
+			//check for collision with walls
+			if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this))
+				return false;
+			break;
+		}
+	}
+	return true;
+}
 
 
 
