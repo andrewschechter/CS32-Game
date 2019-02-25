@@ -9,10 +9,13 @@
 class Actor;
 class Goodie;
 
+
+
 class StudentWorld : public GameWorld
 {
   public:
-    StudentWorld(std::string assetPath);
+
+	StudentWorld(std::string assetPath);
 	virtual ~StudentWorld();
       
 	  // Inherited Functions From GameWorld
@@ -21,7 +24,7 @@ class StudentWorld : public GameWorld
     virtual void cleanUp();
 
 	  // Helper Functions
-	bool willCollideAt(double x, double y, bool projectile_exception = false);
+	bool willCollideAt(double x, double y, Actor* src, bool projectile_exception = false);
 	double euclideanDistance(double x1, double y1, double x2, double y2) const;
 	bool overlaps(Actor* a1, Actor* a2, int threshold) const;
 	
@@ -37,7 +40,16 @@ class StudentWorld : public GameWorld
 	int getFlameCharges() const { return m_flame_charges; }
 	int getLandmines() const { return m_landmines; }
 	double getDistanceToPenelope(Actor* src) const;
-	double getDistanceToNearestZombie(Actor* src);
+	double getDistanceToNearestZombieAt(double x, double y);
+	int getPlayerRow() const;
+	int getPlayerCol() const;
+	//int getPlayerX() const { return penelope->getX(); }
+	//int getPlayerY() const { return penelope->getY(); }
+
+	
+
+	//int getActorRow();
+	//int getActorCol();
 	
 	  // Mutators
 	void setLevelCompletion(bool completion_status) 

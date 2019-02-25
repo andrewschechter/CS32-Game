@@ -1,6 +1,6 @@
 ﻿  Actor.cpp
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(105): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(257): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-  StudentWorld.cpp
-  Generating Code...
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(107): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(129): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(130): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(507): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
   ZombieDash.vcxproj -> C:\Users\schec\Documents\cpp\CS32\projects\ZombieDash\Debug\ZombieDash.exe
