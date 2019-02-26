@@ -24,9 +24,10 @@ class StudentWorld : public GameWorld
     virtual void cleanUp();
 
 	  // Helper Functions
-	bool willCollideAt(double x, double y, Actor* src, bool projectile_exception = false);
+	bool willCollideAt(double x, double y, Actor* src, bool flame_exception = false, bool vomit_excpetion = false);
 	double euclideanDistance(double x1, double y1, double x2, double y2) const;
-	bool overlaps(Actor* a1, Actor* a2, int threshold) const;
+	bool overlaps(Actor* a1, Actor* a2, int threshold = 10) const;
+	bool anyOverlapAt(double x, double y, int threshold = 10);
 	
 	  // Actor Abilities
 	bool useExit(Actor* exit);
@@ -34,6 +35,7 @@ class StudentWorld : public GameWorld
 	bool pickUpGoodie(Goodie* goodie);
 	bool hitByFlame(Actor* flame);
 	bool hitByVomit(Actor* vomit);
+	bool vomitTargetAt(double target_x, double target_y, int range = 10);
 	bool triggerLandmine(Actor* landmine);
 	
 	  // Accessors
@@ -46,12 +48,7 @@ class StudentWorld : public GameWorld
 	void getNearestZombieTargetAt(double src_x, double src_y, double& target_x, double& target_y, double& target_distance);
 	int getPlayerRow() const;
 	int getPlayerCol() const;
-
-
-	
-
-	//int getActorRow();
-	//int getActorCol();
+	int getNumNeedRescue();
 	
 	  // Mutators
 	void setLevelCompletion(bool completion_status) 
@@ -63,10 +60,9 @@ class StudentWorld : public GameWorld
 	void decFlameCharges() { m_flame_charges--; }
 	void addLandmines(int n) { m_landmines += n; }
 	void decLandmines() { m_landmines--; }
+	void decVaccines() { m_vaccines--; }
 	void addActor(Actor* actor) { actors.push_back(actor); }
-
-
-
+	
 
   private:
 	std::vector<Actor*> actors;

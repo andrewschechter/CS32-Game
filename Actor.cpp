@@ -9,7 +9,11 @@
 //******************************************************** //
 void Penelope::doSomething()
 {
-		
+	
+	
+	if (isDead() == true)
+		return;
+
 	if (isInfected())
 	{
 		incInfectionCount();
@@ -18,7 +22,7 @@ void Penelope::doSomething()
 			setDead();
 			return;
 		}
-	}
+	} 
 
 
 	int ch;
@@ -34,7 +38,6 @@ void Penelope::doSomething()
 
 				if(getWorld()->willCollideAt(newX, newY, this) == false)
 					moveTo(newX, newY);
-
 				break;
 			}
 			case KEY_PRESS_RIGHT:
@@ -110,18 +113,29 @@ void Penelope::doSomething()
 						shootFlame(new_pos.first, new_pos.second, getDirection());
 					}
 				}
+				getWorld()->playSound(SOUND_PLAYER_FIRE);
 				getWorld()->decFlameCharges();
 				break;
 			}
 			case KEY_PRESS_TAB:
 			{
-				//if(getLandMines() == 0)
-					//break;
+				if(getLandMines() == 0)
+					break;
 
 				Actor* landmine = new Landmine(getX(), getY(), getWorld());
 				getWorld()->addActor(landmine);
 				getWorld()->decLandmines();
 				break;
+			}
+			case KEY_PRESS_ENTER:
+			{
+				if (getVacccines() == 0)
+					break;
+
+				setHealthy();
+				setInfectionCount(0);
+				getWorld()->decVaccines();
+
 			}
 		}
 	}
@@ -140,6 +154,44 @@ void Penelope::shootFlame(double src_x, double src_y, Direction dir)
 
 void Citizen::doSomething()
 {
+	
+
+	
+	if (isDead() == true)
+		return;
+
+	//check if currently infected
+	if (isInfected())
+	{
+		incInfectionCount();
+		//citizen has become a zombie!
+		if (getInfectionCount() >= 500)
+		{
+			setDead();
+			if (canBeRescued())
+			{
+				getWorld()->increaseScore(-1000);
+			}
+
+			//introduce a new zombie
+			getWorld()->playSound(SOUND_ZOMBIE_BORN);
+			int choose_zombie_type = randInt(0, 9);
+			if (choose_zombie_type <= 2) //30% chance of becoming a smart zombie
+			{   
+				Actor* smart_zombie = new Smart_Zombie(getX(), getY(), getWorld());
+				getWorld()->addActor(smart_zombie);
+			}
+			else if(choose_zombie_type > 2) //70% chance of becoming a dumb zombie
+			{
+				Actor* dumb_zombie = new Dumb_Zombie(getX(), getY(), getWorld());
+				getWorld()->addActor(dumb_zombie);
+			}
+
+			return;
+		}
+	}
+	
+	
 	if (paralyzed)
 	{
 		paralyzed = false;
@@ -353,32 +405,6 @@ Direction Zombie::getRandomDir() const
 
 }
 
-
-void Dumb_Zombie::doSomething()
-{
-	if (paralyzed)
-	{
-		paralyzed = false;
-		return;
-	}
-	else
-		paralyzed = true;
-
-	if (movement_plan_distance == 0)
-		getNewMovementPlan();
-	getNewDestination();
-
-}
-
-void Dumb_Zombie::getNewMovementPlan()
-{
-	movement_plan_distance = randInt(3, 10);
-
-	Direction new_dir = getRandomDir();
-	setDirection(new_dir);
-}
-
-
 void Zombie::getNewDestination()
 {
 	Direction curr_dir = getDirection();
@@ -410,11 +436,58 @@ void Zombie::getNewDestination()
 	}
 	else
 		setMovementPlanDistance(0);
-
 }
 
-void Smart_Zombie::doSomething()
+
+bool Zombie::vomitAt(Direction dir, double target_x, double target_y)
 {
+	if (getWorld()->vomitTargetAt(target_x, target_y))
+	{
+		//1 in 3 chance of vommiting
+		int vomit_decision = randInt(0, 2);
+		if (vomit_decision == 0)
+		{
+			Actor* vomit = new Vomit(target_x, target_y, dir, getWorld());
+			getWorld()->addActor(vomit);
+			getWorld()->playSound(SOUND_ZOMBIE_VOMIT);
+			return true;
+		}
+	}
+	return false;
+}
+
+
+void Zombie::computeVomitCoords(Direction dir, double& target_x, double& target_y)
+{
+	switch (dir)
+	{
+		case up:
+			target_x = getX();
+			target_y = getY() + SPRITE_HEIGHT;
+			break;
+		case down:
+			target_x = getX();
+			target_y = getY() - SPRITE_HEIGHT;
+			break;
+		case left:
+			target_x = getX() - SPRITE_WIDTH;
+			target_y = getY();
+		case right:
+			target_x = getX() + SPRITE_WIDTH;
+			target_y = getY();
+			break;
+	}
+}
+
+
+void Dumb_Zombie::doSomething()
+{
+
+	if (isDead() == true)	
+		return;
+	
+
+	//check if currently paralyzed
 	if (paralyzed)
 	{
 		paralyzed = false;
@@ -422,6 +495,90 @@ void Smart_Zombie::doSomething()
 	}
 	else
 		paralyzed = true;
+
+	//check if zombie target is able to be vomitted on
+	double target_x, target_y;
+	computeVomitCoords(getDirection(), target_x, target_y);
+	if (vomitAt(getDirection(), target_x, target_y))
+		return;
+
+
+	//get new destination and/or movement plan
+	if (movement_plan_distance == 0)
+		getNewMovementPlan();
+	getNewDestination();
+
+}
+
+void Dumb_Zombie::performDeathAction()
+{
+	if (vaccine_carrier == true)
+	{		
+		dropVaccineGoodie();
+	}
+	getWorld()->playSound(SOUND_ZOMBIE_DIE);
+	getWorld()->increaseScore(1000);
+}
+
+
+void Dumb_Zombie::getNewMovementPlan()
+{
+	movement_plan_distance = randInt(3, 10);
+
+	Direction new_dir = getRandomDir();
+	setDirection(new_dir);
+}
+
+void Dumb_Zombie::dropVaccineGoodie()
+{
+	//attempt to fling a vaccine goodie in a random direction
+	Direction fling_direction = getRandomDir();
+	double fling_x, fling_y;
+	switch (fling_direction)
+	{
+		case up:
+			fling_x = getX();
+			fling_y = getY() + SPRITE_HEIGHT;
+			break;
+		case down:
+			fling_x = getX();
+			fling_y = getY() - SPRITE_HEIGHT;
+			break;
+		case left:
+			fling_x = getX() - SPRITE_WIDTH;
+			fling_y = getY();
+			break;
+		case right:
+			fling_x = getX() + SPRITE_WIDTH;
+			fling_y = getY();
+			break;
+	}
+	if(getWorld()->anyOverlapAt(fling_x, fling_y))
+		return;
+
+	Actor* vaccine_goodie = new Vaccine_Goodie(fling_x, fling_y, getWorld());
+	getWorld()->addActor(vaccine_goodie);
+}
+
+
+void Smart_Zombie::doSomething()
+{
+	if (isDead() == true)
+		return;
+	
+	if (paralyzed)
+	{
+		paralyzed = false;
+		return;
+	}
+	else
+		paralyzed = true;
+
+	//check if zombie target is able to be vomitted on
+	double target_x, target_y;
+	computeVomitCoords(getDirection(), target_x, target_y);
+	if (vomitAt(getDirection(), target_x, target_y))
+		return;
 
 	if (movement_plan_distance == 0)
 		getNewMovementPlan();
@@ -478,96 +635,94 @@ void Smart_Zombie::getNewMovementPlan()
 
 
 
-
 //*********************************************************//
 //		    ACTIVATING OBJECT IMPLEMENTATIONS
 //******************************************************** //
 
 void Exit::doSomething()
 {
-	//determine if penelope overlaps
+	
+	
+	//determine if penelope or a citizen overlaps
 	if (getWorld()->useExit(this))
-		getWorld()->setLevelCompletion(true);
+	{
+		
+		if (getWorld()->getNumNeedRescue() <= 0) //penelope exited
+		{
+			
+			getWorld()->setLevelCompletion(true);
 
+		}
+		else if (getWorld()->getNumNeedRescue() > 0) //citizen saved
+		{
+			getWorld()->playSound(SOUND_CITIZEN_SAVED);
+			getWorld()->increaseScore(500);
+		}
+	}
 }
 
 void Pit::doSomething()
-{
+{	
+	
 	//check if actor overlaps
-	if (getWorld()->fallInPit(this))
-		std::cout << "something is gonna fall in a pit" << std::endl;
+	getWorld()->fallInPit(this);
+		
 
 }
 
 void Landmine::doSomething()
 {
 
+	if (isDead() == true)
+		return;
+
 	if (getTicks() == 0)
-		m_active = true;
+		m_is_active = true;
 	else
 	{
 		decTicks();
-		return;
 	}
 
 	//check if landmine overlaps with penelope, a citizen, or a zombie
 	if (getWorld()->triggerLandmine(this))
 	{
-		std::cout << "landmine triggered" << std::endl;
 		setDead();
-		// add flames in the north, south, east, west, NW, SW, NE, SE directions around the landmine
-		// Actor* flameC = new Flame(getX(), getY(), up, getWorld());
-		//Actor* flameN = new Flame(getX(), getY() + SPRITE_HEIGHT, up, getWorld());
-		//Actor* flameS = new Flame(getX(), getY() - SPRITE_HEIGHT, down, getWorld());
-		//Actor* flameW = new Flame(getX() - SPRITE_WIDTH, getY(), left, getWorld());
-	   	//Actor* flameE = new Flame(getX() + SPRITE_WIDTH, getY(), right, getWorld());
-		//Actor* flameNW = new Flame(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, left, getWorld());
-		//Actor* flameNE = new Flame(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, right, getWorld());
-		//Actor* flameSW = new Flame(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, left, getWorld());
-		//Actor* flameSE = new Flame(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, right, getWorld());
+		getWorld()->playSound(SOUND_LANDMINE_EXPLODE);
 		
-		//getWorld()->addActor(flameC);
-		//getWorld()->addActor(flameN);
-		//getWorld()->addActor(flameS);
-		//getWorld()->addActor(flameW);
-		//getWorld()->addActor(flameE);
-		//getWorld()->addActor(flameNW);
-		//getWorld()->addActor(flameNE);
-		//getWorld()->addActor(flameSW);
-		//getWorld()->addActor(flameSE);
 
-		//Actor* pit = new Pit(getX(), getY(), getWorld());
-		//getWorld()->addActor(pit);
-			   	
-		/*
-
-		//Actor* flameC = new Flame(getX(), getY(), up, getWorld());
-		//getWorld()->addActor(flameC);
+		// add flames in the north, south, east, west, NW, SW, NE, SE directions around the landmine
+		Actor* flameC = new Flame(getX(), getY(), up, getWorld());
 		Actor* flameN = new Flame(getX(), getY() + SPRITE_HEIGHT, up, getWorld());
+		Actor* flameS = new Flame(getX(), getY() - SPRITE_HEIGHT, up, getWorld());
+		Actor* flameW = new Flame(getX() - SPRITE_WIDTH, getY(), up, getWorld());
+	   	Actor* flameE = new Flame(getX() + SPRITE_WIDTH, getY(), up, getWorld());
+		Actor* flameNW = new Flame(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up, getWorld());
+		Actor* flameNE = new Flame(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, up, getWorld());
+		Actor* flameSW = new Flame(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up, getWorld());
+		Actor* flameSE = new Flame(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, up, getWorld());
+		
+		getWorld()->addActor(flameC);
 		getWorld()->addActor(flameN);
-		Actor* flameS = new Flame(getX(), getY() - SPRITE_HEIGHT, down, getWorld());
 		getWorld()->addActor(flameS);
-		Actor* flameW = new Flame(getX() - SPRITE_WIDTH, getY(), left, getWorld());
 		getWorld()->addActor(flameW);
-		Actor* flameE = new Flame(getX() + SPRITE_WIDTH, getY(), right, getWorld());
 		getWorld()->addActor(flameE);
-		Actor* flameNW = new Flame(getX() - SPRITE_WIDTH, getY() + SPRITE_HEIGHT, left, getWorld());
 		getWorld()->addActor(flameNW);
-		Actor* flameNE = new Flame(getX() + SPRITE_WIDTH, getY() + SPRITE_HEIGHT, right, getWorld());
 		getWorld()->addActor(flameNE);
-		Actor* flameSW = new Flame(getX() - SPRITE_WIDTH, getY() - SPRITE_HEIGHT, left, getWorld());
 		getWorld()->addActor(flameSW);
-		Actor* flameSE = new Flame(getX() + SPRITE_WIDTH, getY() - SPRITE_HEIGHT, right, getWorld());
 		getWorld()->addActor(flameSE);
-		*/
 
+		Actor* pit = new Pit(getX(), getY(), getWorld());
+		getWorld()->addActor(pit);
+	
 	}
-
 
 }
 
 void Flame::doSomething()
 {
+	if (isDead() == true)
+		return;
+	
 	if (getTicks() == 0)
 	{
 		setDead();
@@ -582,6 +737,9 @@ void Flame::doSomething()
 
 void Vomit::doSomething()
 {
+	if (isDead() == true)
+		return;
+	
 	if (getTicks() == 0)
 	{
 		setDead();
@@ -602,8 +760,12 @@ void Vomit::doSomething()
 
 void Vaccine_Goodie::doSomething()
 {
+	if (isDead() == true)
+		return;
+	
 	if (getWorld()->pickUpGoodie(this))
 	{
+		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->increaseScore(50);
 		getWorld()->addVaccine();
 	}
@@ -611,8 +773,12 @@ void Vaccine_Goodie::doSomething()
 
 void Gas_Can_Goodie::doSomething()
 {
+	if (isDead() == true)
+		return;
+	
 	if (getWorld()->pickUpGoodie(this))
 	{
+		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->increaseScore(50);
 		getWorld()->addFlameCharges(5);
 	}
@@ -620,8 +786,12 @@ void Gas_Can_Goodie::doSomething()
 
 void Landmine_Goodie::doSomething()
 {
+	if (isDead() == true)
+		return;
+	
 	if (getWorld()->pickUpGoodie(this))
 	{
+		getWorld()->playSound(SOUND_GOT_GOODIE);
 		getWorld()->increaseScore(50);
 		getWorld()->addLandmines(2);
 	}

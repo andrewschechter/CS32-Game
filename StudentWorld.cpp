@@ -62,7 +62,7 @@ int StudentWorld::init()
 
 	ostringstream oss;
 	oss.fill('0');
-	oss << "level" << setw(2) << getLevel()+2 << ".txt";
+	oss << "level" << setw(2) << getLevel() << ".txt";
 	string levelFile = oss.str();
 
 	Level::LoadResult result = level.loadLevel(levelFile);
@@ -158,27 +158,35 @@ int StudentWorld::move()
 {
 	
 	if (m_level_complete == true)
+	{
+		playSound(SOUND_LEVEL_FINISHED);
 		return GWSTATUS_FINISHED_LEVEL;
+	}
 	
 	if (penelope->isDead())
+	{
+		playSound(SOUND_PLAYER_DIE);
 		return GWSTATUS_PLAYER_DIED;
+	}
 	penelope->doSomething();
 	
 
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
-		if (!(*it)->isDead())
-		{
-			(*it)->doSomething();
 		
-			if (penelope->isDead())
-			{
-				decLives();
-				return GWSTATUS_PLAYER_DIED;
-			}
-			if (m_level_complete == true)
-				return GWSTATUS_FINISHED_LEVEL;
+		(*it)->doSomething();
+		
+		if (penelope->isDead())
+		{				
+			decLives();
+			playSound(SOUND_PLAYER_DIE);
+			return GWSTATUS_PLAYER_DIED;
+		}
+		if (m_level_complete == true)
+		{
+			playSound(SOUND_LEVEL_FINISHED);
+			return GWSTATUS_FINISHED_LEVEL;
 		}
 	}
 
@@ -187,6 +195,8 @@ int StudentWorld::move()
 	{
 		if ((*it)->isDead())
 		{
+			(*it)->performDeathAction();
+			
 			delete *it;
 			actors.erase(it);
 			it = actors.begin();
@@ -195,9 +205,16 @@ int StudentWorld::move()
 
 	  // Update the game status line
 	ostringstream oss;
+	
 	oss.fill('0');
-	oss << "Score: " << setw(6) << getScore()
-		<< "  Level: " << getLevel()
+	if (getScore() < 0)
+		oss << "Score: " << "-" << setw(5) << -1*getScore();
+	else
+	{
+		
+		oss << "Score: " << setw(6) << getScore();
+	}
+	oss << "  Level: " << getLevel()
 		<< "  Lives: " << getLives()
 		<< "  Vacc:  " << getVaccines()
 		<< "  Flames: " << getFlameCharges()
@@ -229,58 +246,39 @@ void StudentWorld::cleanUp()
   // Helper Function
 
 //note: certain projectiles may allow collisions to occur on objects that otherwise don't allow overlap, hence a projectile exception is needed
-bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool projectile_exception)
+bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool flame_exception, bool vomit_exception)
 {
-	 // new position's bounding box
-	double new_x_max = new_x + SPRITE_WIDTH - 1;
-	double new_y_max = new_y + SPRITE_HEIGHT - 1;
 	
-
-
-
 	if (!penelope->allowsOverlap() && src != penelope)
 	{
-
-		// current actor's bounding box
-		double obj_x = penelope->getX();
-		double obj_y = penelope->getY();
-		double obj_x_max = obj_x + SPRITE_WIDTH - 1;
-		double obj_y_max = obj_y + SPRITE_HEIGHT - 1;
-
 		
 		if (euclideanDistance(new_x, new_y, penelope->getX(), penelope->getY()) < SPRITE_WIDTH)
 			return true;
 
-		
-		
-		
-		
-		/*
-		/
-		// check each of the new bounding box and see if it is within the current actor's bounding box
-		if ((new_x >= obj_x && new_x < obj_x_max) && (new_y >= obj_y && new_y < obj_y_max))
-			return true;
-		else if ((new_x_max >= obj_x && new_x_max < obj_x + SPRITE_WIDTH - 1) && (new_y_max >= obj_y && new_y_max < obj_y_max))
-			return true;
-		else if ((new_x_max >= obj_x && new_x_max < obj_x + SPRITE_WIDTH - 1) && (new_y >= obj_y && new_y < obj_y_max))
-			return true;
-		else if ((new_x >= obj_x && new_x < obj_x_max) && (new_y_max >= obj_y && new_y_max < obj_y_max))
-			return true;*/
-
 	}
+	  
 	  // for each actor that doesn't allow overlap, 
 	  //check if it's bouding box would overlap with the hypothetical bounding box created at the new x, y
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
+		
 		Actor* curr_actor = *it; //set the current actor to the actor pointed to by the vector iterator
 		
-		if (src == *it)
+		if (src == curr_actor)
 			continue;
 		
-		if (projectile_exception)
+		
+		if (flame_exception)
 		{
-			if (!curr_actor->blocksFlames() || !curr_actor->blocksVomit())
+			if (!curr_actor->blocksFlames())
+			{
+				continue;
+			}
+		}
+		else if (vomit_exception)
+		{
+			if (!curr_actor->blocksFlames())
 			{
 				continue;
 			}
@@ -289,47 +287,15 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool pr
 		{
 			continue;
 		}
-
-		if(euclideanDistance(new_x, new_y, (*it)->getX(), (*it)->getY()) < SPRITE_WIDTH)
+		 
+		if (euclideanDistance(new_x, new_y, curr_actor->getX(), curr_actor->getY()) < SPRITE_WIDTH)
+		{
 			return true;
-		
-
-
-
-
-
-		   
-		 /* // current actor's bounding box
-		double obj_x = curr_actor->getX(); 
-		double obj_y = curr_actor->getY();
-		double obj_x_max = obj_x + SPRITE_WIDTH - 1;
-		double obj_y_max = obj_y + SPRITE_HEIGHT - 1;
-
-		  // check each of the new bounding box and see if it is within the current actor's bounding box
-		if ((new_x >= obj_x && new_x < obj_x_max) && (new_y >= obj_y && new_y < obj_y_max))
-			return true;
-		else if ((new_x_max >= obj_x && new_x_max < obj_x + SPRITE_WIDTH - 1) && (new_y_max >= obj_y && new_y_max < obj_y_max))
-			return true;
-		else if ((new_x_max >= obj_x && new_x_max < obj_x + SPRITE_WIDTH - 1) && (new_y >= obj_y && new_y < obj_y_max))
-			return true;
-		else if ((new_x >= obj_x && new_x < obj_x_max) && (new_y_max >= obj_y && new_y_max < obj_y_max))
-			return true;*/
-			
+		}
 	}
 	return false;
 
-
-
-
-
-
-
-
 }
-
-
-
-
 
 
 double StudentWorld::euclideanDistance(double x1, double y1, double x2, double y2) const
@@ -351,19 +317,42 @@ bool StudentWorld::overlaps(Actor* a1, Actor* a2, int threshold) const // thresh
 	return false;
 }
 
-
-  // Actor Abilities 
-bool StudentWorld::useExit(Actor* exit)
+bool StudentWorld::anyOverlapAt(double x, double y, int threshold) 
 {
-	if (penelope->canUseExits() && overlaps(penelope, exit, 10)) //penelope should be able to exit if no citizens are present
+	if (euclideanDistance(x, y, penelope->getX(), penelope->getY()) <= threshold)
 		return true;
 	
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
 
-		if ((*it)->canUseExits() && overlaps(*it, exit, 10))
+		if (euclideanDistance(x, y, (*it)->getX(), (*it)->getY()) <= threshold)
 			return true;
+	}
+
+	return false;
+
+}
+
+
+  // Actor Abilities 
+bool StudentWorld::useExit(Actor* exit)
+{
+	if (penelope->canUseExits() && getNumNeedRescue() == 0 && overlaps(penelope, exit, 10)) //penelope should be able to exit if no citizens are present
+	{
+		return true;
+	}
+	
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+
+		if ((*it)->canUseExits() && overlaps(*it, exit, 10))
+		{
+			//citizen saved!
+			(*it)->setDead();
+			return true;
+		}
 
 	}
 	return false;
@@ -383,7 +372,14 @@ bool StudentWorld::fallInPit(Actor* pit)
 
 		if ((*it)->canFallInPit() && overlaps(*it, pit, 10))
 		{
+			
+			if ((*it)->canBeRescued())
+			{
+				playSound(SOUND_CITIZEN_DIE);
+				increaseScore(-1000);
+			}
 			(*it)->setDead();
+
 			return true;
 		}
 		
@@ -406,6 +402,12 @@ bool StudentWorld::hitByFlame(Actor* flame)
 
 		if (!(*it)->blocksFlames() && (*it)->canDieByFlames() && overlaps(*it, flame, 10))
 		{
+			
+			if ((*it)->canBeRescued())
+			{
+				playSound(SOUND_CITIZEN_DIE);
+				increaseScore(-1000);
+			}
 			(*it)->setDead();
 			return true;
 		}
@@ -428,7 +430,10 @@ bool StudentWorld::hitByVomit(Actor* vomit)
 
 		if (!(*it)->blocksVomit() && (*it)->canBeInfectedByVomit() && overlaps(*it, vomit, 10))
 		{
+			if ((*it)->isInfected())
+				continue;
 			(*it)->setInfected();
+			playSound(SOUND_CITIZEN_INFECTED);
 			return true;
 		}
 	}
@@ -437,10 +442,9 @@ bool StudentWorld::hitByVomit(Actor* vomit)
 }
 
 
-
 bool StudentWorld::triggerLandmine(Actor* landmine)
 {
-	if (penelope->canTriggerLandmine() && overlaps(penelope, landmine, 10))
+	if (penelope->canTriggerLandmine() && landmine->isActiveLandmine() && overlaps(penelope, landmine))
 	{	
 		return true;
 	}
@@ -448,8 +452,12 @@ bool StudentWorld::triggerLandmine(Actor* landmine)
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
-
-		if ((*it)->canTriggerLandmine() && overlaps(*it, landmine, 10))
+		
+		if ((*it)->canTriggerInactiveLandmine() && overlaps(*it, landmine))
+		{
+			return true;
+		}
+		else if ((*it)->canTriggerLandmine() && landmine->isActiveLandmine() && overlaps(*it, landmine))
 		{
 			return true;
 		}
@@ -457,12 +465,11 @@ bool StudentWorld::triggerLandmine(Actor* landmine)
 	}
 	return false;
 
-
 }
 
 bool StudentWorld::pickUpGoodie(Goodie* goodie)
 {
-	if (overlaps(penelope, goodie, 10))
+	if (overlaps(penelope, goodie))
 	{
 		goodie->setDead();
 		return true;
@@ -528,8 +535,42 @@ void StudentWorld::getNearestZombieTargetAt(double src_x, double src_y, double& 
 
 }
 
+bool StudentWorld::vomitTargetAt(double target_x, double target_y, int range)
+{
+	if (penelope->isZombieTarget())
+	{
+		double distance = euclideanDistance(penelope->getX(), penelope->getY(), target_x, target_y);
+		if (distance <= range)
+			return true;
+	}
+
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+		if (!(*it)->isZombieTarget())
+			continue;
+
+		double distance = euclideanDistance((*it)->getX(), (*it)->getY(), target_x, target_y);
+		if (distance <= range)
+			return true;
+	}
+	return false;
+
+}
 
 
+int StudentWorld::getNumNeedRescue()
+{
+	int total = 0;
+	
+	vector<Actor*>::iterator it;
+	for (it = actors.begin(); it != actors.end(); it++)
+	{
+		if ((*it)->canBeRescued())
+			total++;
+	}
+	return total;
+}
 
 
 
