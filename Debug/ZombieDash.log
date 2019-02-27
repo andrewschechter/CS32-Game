@@ -1,15 +1,4 @@
-﻿  Actor.cpp
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(123): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(134): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(160): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(161): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(449): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(450): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(452): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(453): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-  StudentWorld.cpp
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\studentworld.cpp(39): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\studentworld.cpp(43): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
-  Generating Code...
-c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(356): warning C4715: 'Zombie::getRandomDir': not all control paths return a value
+﻿  StudentWorld.cpp
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\studentworld.cpp(36): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\studentworld.cpp(40): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
   ZombieDash.vcxproj -> C:\Users\schec\Documents\cpp\CS32\projects\ZombieDash\Debug\ZombieDash.exe

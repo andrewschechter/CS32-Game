@@ -673,7 +673,7 @@ void Pit::doSomething()
 void Landmine::doSomething()
 {
 
-	if (isDead() == true)
+	if (isDead())
 		return;
 
 	if (getTicks() == 0)

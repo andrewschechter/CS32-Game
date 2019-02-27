@@ -13,7 +13,7 @@ class Actor : public GraphObject
 	{
 		m_world = world;
 	}
-	
+	virtual ~Actor() {};
 	virtual void doSomething() = 0;
 	
 	 
@@ -77,7 +77,7 @@ class Agent : public Actor
 	{
 
 	}
-
+	virtual ~Agent() {};
 	virtual bool canFallInPit() const { return m_can_fall_in_pit; }
 	virtual bool canTriggerLandmine() const { return m_can_trigger_landmine; }
 	virtual bool canDie() const { return m_can_die; }
@@ -113,7 +113,7 @@ class Human : public Agent
 	{
 	
 	}
-	
+	virtual ~Human() {};
 	virtual bool canUseExits() const { return m_can_use_exit; }
 	virtual bool isZombieTarget() const { return m_is_zombie_target; }
 	virtual bool canBeInfectedByVomit() const { return m_can_be_infected_by_vomit; }
@@ -138,6 +138,7 @@ class Penelope : public Human
 	{
 		
 	}
+	virtual ~Penelope() {};
 	virtual void doSomething();
 	int getFlameCharges() { return getWorld()->getFlameCharges(); }
 	int getLandMines() { return getWorld()->getLandmines(); }
@@ -171,6 +172,7 @@ class Citizen : public Human
 		// can be damaged by flame = true
 
 	}
+	virtual ~Citizen() {};
 	virtual void doSomething();
 	virtual int getInfectionCount() const { return m_infection_count; }
 	virtual void incInfectionCount() { m_infection_count++; }
@@ -203,6 +205,7 @@ class Zombie : public Agent
 	  {
 
 	  }
+	  virtual ~Zombie() {};
 	  virtual void doSomething() = 0;
 	  virtual bool isZombie() const { return m_is_zombie; }
   
@@ -230,7 +233,7 @@ class Smart_Zombie : public Zombie
 
 
     }
-	
+	virtual ~Smart_Zombie() {};
 	virtual void doSomething();
 	
 	virtual void decMovementPlanDistance() { movement_plan_distance--; }
@@ -262,6 +265,7 @@ class Dumb_Zombie : public Zombie
 		else
 			vaccine_carrier = false;
 	}
+	virtual ~Dumb_Zombie() {};
 	virtual void doSomething();
 	virtual void decMovementPlanDistance() { movement_plan_distance--; }
 	virtual void setMovementPlanDistance(int n) { movement_plan_distance = n; }
@@ -285,6 +289,7 @@ class Wall : public Actor
 	:Actor(IID_WALL, start_x, start_y, right, world)
 	{
 	}
+	virtual ~Wall() {};
 	virtual void doSomething() { return; } //walls don't do anything
 
 	virtual bool blocksFlames() const { return m_blocks_flames; }
@@ -306,6 +311,7 @@ public:
 	{
 
 	}
+	virtual ~Activating_Object() {};
 	virtual bool allowsOverlap() const { return m_allow_overlap; }
 
 
@@ -328,6 +334,7 @@ class Exit : public Activating_Object
 	  // can die = false
 	  // blocks flames = true;
 	}
+	virtual ~Exit() {};
 	virtual void doSomething();
 	virtual bool blocksFlames() const { return m_blocks_flames; }
 
@@ -354,6 +361,7 @@ class Pit : public Activating_Object
 	  // can die = false
 	  // blocks flames = false (i.e. doesnt block flame at the very least)
 	}
+	virtual ~Pit() {};
 	virtual void doSomething();
 
 };
@@ -372,6 +380,7 @@ class Landmine : public Activating_Object
           // can die = true
           // can be damaged be flames = true 
 	  }
+	  virtual ~Landmine() {};
 	  virtual void doSomething();
 
 	  virtual bool canDie() { return m_can_die; }
@@ -405,6 +414,7 @@ class Flame : public Activating_Object
 	    // can die = true
 		// can be damaged by flame = false; //but also doesnt block flames??
 	  }
+	  virtual ~Flame() {};
 	  virtual void doSomething();
 	  virtual bool canDie() { return m_can_die; }
 	  virtual bool canTriggerInactiveLandmine() { return m_can_trigger_inactive_landmine; }
@@ -427,6 +437,7 @@ class Vomit : public Activating_Object
 	  {
 
 	  }
+	  virtual ~Vomit() {};
 	  virtual void doSomething();
 	  virtual bool canDie() { return m_can_die; }
 
@@ -457,6 +468,7 @@ class Goodie : public Activating_Object
 		  // can die = true
 		  // can be damaged by flame = true;
 	  }
+	  virtual ~Goodie() {};
 	  virtual void doSomething() = 0;
 	  virtual bool canDieByFlames() { return m_can_die_by_flames; }
 	  virtual bool canDie() { return m_can_die; }
@@ -474,6 +486,7 @@ class Vaccine_Goodie : public Goodie
 	:Goodie(IID_VACCINE_GOODIE, start_x, start_y, world)
 	{	
 	}
+	virtual ~Vaccine_Goodie() {};
 	virtual void doSomething();
 };
 
@@ -496,6 +509,7 @@ class Landmine_Goodie : public Goodie
 	:Goodie(IID_LANDMINE_GOODIE, start_x, start_y, world)
 	{
 	}
+	virtual ~Landmine_Goodie() {};
 	virtual void doSomething();
 };
 

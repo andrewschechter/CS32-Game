@@ -12,9 +12,6 @@ using namespace std;
 
 
 
-
-
-
 GameWorld* createStudentWorld(string assetPath)
 {
 	return new StudentWorld(assetPath);
@@ -62,7 +59,7 @@ int StudentWorld::init()
 
 	ostringstream oss;
 	oss.fill('0');
-	oss << "level" << setw(2) << getLevel() << ".txt";
+	oss << "level" << setw(2) << getLevel()+4 << ".txt";
 	string levelFile = oss.str();
 
 	Level::LoadResult result = level.loadLevel(levelFile);
@@ -390,7 +387,7 @@ bool StudentWorld::fallInPit(Actor* pit)
 
 bool StudentWorld::hitByFlame(Actor* flame)
 {
-	if (!penelope->blocksFlames() && penelope->canDieByFlames() && overlaps(penelope, flame, 10))
+	if (!penelope->isDead() && !penelope->blocksFlames() && penelope->canDieByFlames() && overlaps(penelope, flame, 10))
 	{
 		penelope->setDead();
 		return true;
@@ -400,7 +397,7 @@ bool StudentWorld::hitByFlame(Actor* flame)
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
 
-		if (!(*it)->blocksFlames() && (*it)->canDieByFlames() && overlaps(*it, flame, 10))
+		if (!(*it)->blocksFlames() && (*it)->canDieByFlames() && !(*it)->isDead() && overlaps(*it, flame, 10))
 		{
 			
 			if ((*it)->canBeRescued())
@@ -444,7 +441,12 @@ bool StudentWorld::hitByVomit(Actor* vomit)
 
 bool StudentWorld::triggerLandmine(Actor* landmine)
 {
-	if (penelope->canTriggerLandmine() && landmine->isActiveLandmine() && overlaps(penelope, landmine))
+	
+	if (landmine->isDead())
+		return false;
+	
+	
+	if (!penelope->isDead() && penelope->canTriggerLandmine() && landmine->isActiveLandmine() && overlaps(penelope, landmine))
 	{	
 		return true;
 	}
