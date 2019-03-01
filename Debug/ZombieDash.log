@@ -1,4 +1,28 @@
-﻿  StudentWorld.cpp
+﻿  Actor.cpp
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(126): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(147): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(182): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(187): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(211): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(212): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(453): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(563): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(608): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(609): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(611): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(612): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(698): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(699): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(700): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(701): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(702): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(703): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(704): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(705): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(706): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\actor.cpp(718): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+  StudentWorld.cpp
 c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\studentworld.cpp(36): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
 c:\users\schec\documents\cpp\cs32\projects\zombiedash\zombiedash\studentworld.cpp(40): warning C4244: 'return': conversion from 'double' to 'int', possible loss of data
+  Generating Code...
   ZombieDash.vcxproj -> C:\Users\schec\Documents\cpp\CS32\projects\ZombieDash\Debug\ZombieDash.exe

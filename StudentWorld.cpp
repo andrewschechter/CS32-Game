@@ -59,7 +59,7 @@ int StudentWorld::init()
 
 	ostringstream oss;
 	oss.fill('0');
-	oss << "level" << setw(2) << getLevel()+4 << ".txt";
+	oss << "level" << setw(2) << getLevel() << ".txt";
 	string levelFile = oss.str();
 
 	Level::LoadResult result = level.loadLevel(levelFile);
@@ -231,6 +231,7 @@ void StudentWorld::cleanUp()
 		delete penelope;
 		penelope = nullptr;
 	}
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -275,7 +276,7 @@ bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool fl
 		}
 		else if (vomit_exception)
 		{
-			if (!curr_actor->blocksFlames())
+			if (!curr_actor->blocksVomit())
 			{
 				continue;
 			}
@@ -319,6 +320,7 @@ bool StudentWorld::anyOverlapAt(double x, double y, int threshold)
 	if (euclideanDistance(x, y, penelope->getX(), penelope->getY()) <= threshold)
 		return true;
 	
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -339,7 +341,7 @@ bool StudentWorld::useExit(Actor* exit)
 	{
 		return true;
 	}
-	
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -362,7 +364,7 @@ bool StudentWorld::fallInPit(Actor* pit)
 		penelope->setDead();
 		return true;
 	}
-	
+	//iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -393,6 +395,7 @@ bool StudentWorld::hitByFlame(Actor* flame)
 		return true;
 	}
 
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -421,6 +424,7 @@ bool StudentWorld::hitByVomit(Actor* vomit)
 		return true;
 	}
 
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -451,6 +455,7 @@ bool StudentWorld::triggerLandmine(Actor* landmine)
 		return true;
 	}
 
+	//iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -491,6 +496,7 @@ double StudentWorld::getDistanceToNearestZombieAt(double src_x, double src_y)
 {
 	double curr_minimum = VIEW_WIDTH * VIEW_WIDTH + VIEW_HEIGHT * VIEW_HEIGHT;
 
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -507,6 +513,8 @@ double StudentWorld::getDistanceToNearestZombieAt(double src_x, double src_y)
 
 void StudentWorld::getNearestZombieTargetAt(double src_x, double src_y, double& target_x, double& target_y, double& target_distance)
 {
+	
+	
 	double curr_minimum = VIEW_WIDTH * VIEW_WIDTH + VIEW_HEIGHT * VIEW_HEIGHT;
 
 	if (penelope->isZombieTarget())
@@ -519,7 +527,7 @@ void StudentWorld::getNearestZombieTargetAt(double src_x, double src_y, double& 
 			target_y = penelope->getY();
 		}
 	}
-	
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -534,7 +542,8 @@ void StudentWorld::getNearestZombieTargetAt(double src_x, double src_y, double& 
 			target_y = (*it)->getY();
 		}
 	}
-
+	
+	target_distance = curr_minimum;
 }
 
 bool StudentWorld::vomitTargetAt(double target_x, double target_y, int range)
@@ -545,7 +554,7 @@ bool StudentWorld::vomitTargetAt(double target_x, double target_y, int range)
 		if (distance <= range)
 			return true;
 	}
-
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{
@@ -564,7 +573,7 @@ bool StudentWorld::vomitTargetAt(double target_x, double target_y, int range)
 int StudentWorld::getNumNeedRescue()
 {
 	int total = 0;
-	
+	  //iterate thru actors
 	vector<Actor*>::iterator it;
 	for (it = actors.begin(); it != actors.end(); it++)
 	{

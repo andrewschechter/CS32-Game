@@ -3,7 +3,6 @@
 #include <iostream>
 
 
-
 //*********************************************************//
 //			  PENELOPE IMPLEMENTATION
 //******************************************************** //
@@ -100,6 +99,7 @@ void Penelope::doSomething()
 					{
 						new_pos.first = getX() - i * SPRITE_WIDTH;
 						new_pos.second = getY();
+						  //check for collision with walls
 						if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this, true))
 							break;
 						shootFlame(new_pos.first, new_pos.second, getDirection());
@@ -108,6 +108,7 @@ void Penelope::doSomething()
 					{
 						new_pos.first = getX() + i * SPRITE_WIDTH;
 						new_pos.second = getY();
+						  //check for collision with walls
 						if (getWorld()->willCollideAt(new_pos.first, new_pos.second, this, true))
 							break;
 						shootFlame(new_pos.first, new_pos.second, getDirection());
@@ -191,7 +192,7 @@ void Citizen::doSomething()
 		}
 	}
 	
-	
+	  //check if citizen is paralyzed 
 	if (paralyzed)
 	{
 		paralyzed = false;
@@ -213,9 +214,9 @@ void Citizen::doSomething()
 		std::pair<double, double> new_pos;
 
 
-		if (citizen_row == getWorld()->getPlayerRow())
+		if (citizen_row == getWorld()->getPlayerRow()) //same row
 		{
-			Direction dir = getHorizontalDirToPenelope(citizen_col);
+			Direction dir = getHorizontalDirToPenelope(citizen_col); //get dir
 			if (canMoveInDirection(dir, new_pos))
 			{
 				setDirection(dir);
@@ -223,9 +224,9 @@ void Citizen::doSomething()
 				return;
 			}
 		}	
-		else if(citizen_col == getWorld()->getPlayerCol())
+		else if(citizen_col == getWorld()->getPlayerCol()) //same col
 		{
-			Direction dir = getVerticalDirToPenelope(citizen_row);
+			Direction dir = getVerticalDirToPenelope(citizen_row); //get dir
 			if (canMoveInDirection(dir, new_pos))
 			{
 				setDirection(dir);
@@ -237,8 +238,8 @@ void Citizen::doSomething()
 		{
 			Direction dir_0 = getVerticalDirToPenelope(citizen_row); //dir 0
 			Direction dir_1 = getHorizontalDirToPenelope(citizen_col);  //dir 1
-			int choose_dir = randInt(0, 1);
-			if (choose_dir == 0)
+			int choose_dir = randInt(0, 1); //choose one of the two directions
+			if (choose_dir == 0) //try first dir
 			{
 				if (canMoveInDirection(dir_0, new_pos))
 				{
@@ -246,14 +247,14 @@ void Citizen::doSomething()
 					moveTo(new_pos.first, new_pos.second);
 					return;
 				}
-				else if (canMoveInDirection(dir_1, new_pos))
+				else if (canMoveInDirection(dir_1, new_pos)) //if blocked try second dir
 				{
 					setDirection(dir_1);
 					moveTo(new_pos.first, new_pos.second);
 					return;
 				}
 			}
-			else if (choose_dir == 1)
+			else if (choose_dir == 1) //try second dir
 			{
 				if (canMoveInDirection(dir_1, new_pos))
 				{
@@ -261,7 +262,7 @@ void Citizen::doSomething()
 					moveTo(new_pos.first, new_pos.second);
 					return;
 				}
-				else if (canMoveInDirection(dir_0, new_pos))
+				else if (canMoveInDirection(dir_0, new_pos)) //if blocked try first dir
 				{
 					setDirection(dir_0);
 					moveTo(new_pos.first, new_pos.second);
@@ -270,13 +271,14 @@ void Citizen::doSomething()
 			}
 		}
 	}
-	else if (dist_z <= 80)
+	else if (dist_z <= 80) //if the distance to the nearest zombie is <= 80	
 	{
 		
 		std::pair<double, double> new_pos;     // new final position x, y
 		std::pair<double, double> pot_new_pos; //potential new position x, y
 		double new_dist_z = dist_z;
 		Direction new_dir;
+		  //check each direction and find the direction with the maxmium new distance
 		if (canMoveInDirection(up, pot_new_pos))
 		{	
 			double pot_new_dist_z = getWorld()->getDistanceToNearestZombieAt(pot_new_pos.first, pot_new_pos.second);
@@ -398,10 +400,11 @@ Direction Zombie::getRandomDir() const
 		case 2:
 			return right;
 			break;
-		case 3:
+		default:
 			return left;
 			break;
 	}
+
 
 }
 
@@ -472,6 +475,7 @@ void Zombie::computeVomitCoords(Direction dir, double& target_x, double& target_
 		case left:
 			target_x = getX() - SPRITE_WIDTH;
 			target_y = getY();
+			break;
 		case right:
 			target_x = getX() + SPRITE_WIDTH;
 			target_y = getY();
@@ -504,7 +508,7 @@ void Dumb_Zombie::doSomething()
 
 
 	//get new destination and/or movement plan
-	if (movement_plan_distance == 0)
+	if (getMovementPlanDistance() == 0)
 		getNewMovementPlan();
 	getNewDestination();
 
@@ -523,7 +527,7 @@ void Dumb_Zombie::performDeathAction()
 
 void Dumb_Zombie::getNewMovementPlan()
 {
-	movement_plan_distance = randInt(3, 10);
+	setMovementPlanDistance(randInt(3, 10));
 
 	Direction new_dir = getRandomDir();
 	setDirection(new_dir);
@@ -580,7 +584,7 @@ void Smart_Zombie::doSomething()
 	if (vomitAt(getDirection(), target_x, target_y))
 		return;
 
-	if (movement_plan_distance == 0)
+	if (getMovementPlanDistance() == 0)
 		getNewMovementPlan();
 	getNewDestination();
 
@@ -589,7 +593,7 @@ void Smart_Zombie::doSomething()
 
 void Smart_Zombie::getNewMovementPlan()
 {
-	movement_plan_distance = randInt(3, 10);
+	setMovementPlanDistance(randInt(3, 10));
 
 	double target_dist, target_x, target_y;
 	getWorld()->getNearestZombieTargetAt(getX(), getY(), target_x, target_y, target_dist);
@@ -677,7 +681,7 @@ void Landmine::doSomething()
 		return;
 
 	if (getTicks() == 0)
-		m_is_active = true;
+		activateLandmine();
 	else
 	{
 		decTicks();

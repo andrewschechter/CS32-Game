@@ -56,11 +56,11 @@ class StudentWorld : public GameWorld
 		m_level_complete = completion_status;
 	}
 	void addVaccine() { m_vaccines++; }
+	void decVaccines() { m_vaccines--; }
 	void addFlameCharges(int n) { m_flame_charges += n; }
 	void decFlameCharges() { m_flame_charges--; }
 	void addLandmines(int n) { m_landmines += n; }
 	void decLandmines() { m_landmines--; }
-	void decVaccines() { m_vaccines--; }
 	void addActor(Actor* actor) { actors.push_back(actor); }
 	
 
