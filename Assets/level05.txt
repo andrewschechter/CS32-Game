@@ -1,16 +1,16 @@
 ################
-#   X  @       #
+#     @        #
+# LLLLLLLLLLLL #
+# GGGGGGGGGGGG #
+#  ##########  #
+#      #X#     #
 #              #
 #              #
 #              #
-#              #
-#              #
-#              #
-#              #
-#              #
-#              #
-#              #
-#              #
-#              #
-#              #
+###    ##    ###
+#DDDDDDDDDDDDDD#
+#SS###SSS####SS#
+#SS#CCCCCCCS#SS#
+#SS##########SS#
+#SSSSSSSSSSSSSS#
 ################

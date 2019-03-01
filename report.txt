@@ -1,0 +1,497 @@
+Andrew Schechter
+
+Project 5 - ZombieDash
+
+Class Hierarchy:
+	StudentWorld
+	Actor
+		Wall
+		Agent
+			Human
+				Penelope
+				Citizen
+			Zombie
+				Dumb_Zombie
+				Smart_Zombie
+		Activating_Object
+			Exit
+			Pit
+			Landmine
+			Flame
+			Vomit
+				Goodie
+					Vaccine_Goodie
+					Gas_Can_Goodie
+					Landmine_Goodie
+
+1. Public Member Functions:
+	StudentWorld:
+		 // Inherited Functions From GameWorld
+		virtual int init(); -Initializes a new level
+		virtual int move(); -Runs thru every actors doSomething() 
+		virtual void cleanUp(); -Cleans up dynamically allocated memory at the end of a level or when student world goes out of scope
+		 	 
+		 // Helper Functions
+		bool willCollideAt(double x, double y, Actor* src, bool flame_exception = false, bool vomit_excpetion = false); -Determines if an actor would collide at a point 
+		double euclideanDistance(double x1, double y1, double x2, double y2) const; -Returns the euclidean distance between two points
+		bool overlaps(Actor* a1, Actor* a2, int threshold = 10) const; -Determines if two actors overlap given a pixel euclidean distance threshold
+		bool anyOverlapAt(double x, double y, int threshold = 10); -Determines if any actors exist within a pixel euclidean distance threshold around a point
+	
+	     // Actor Abilities
+		bool useExit(Actor* exit); -Communicates with the Exit class to determine if an exit was activated
+		bool fallInPit(Actor* pit); -Communicates with the Pit class to determine if a pit was activated
+		bool pickUpGoodie(Goodie* goodie); -Communicates with all Goodie classes to see if a goodie was picked up
+		bool hitByFlame(Actor* flame); -Communicates with the Flame class to see if something was hit by a flame
+		bool hitByVomit(Actor* vomit); -Communicates with the Vomit class to see if something was hit by vomit
+		bool vomitTargetAt(double target_x, double target_y, int range = 10); -Communicates with the Zombie classes to see if there is zombie target within range of a given point
+		bool triggerLandmine(Actor* landmine); -Communicates with the Landmine class to see if a landmine was triggered
+	
+	     // Accessors
+		int getVaccines() const { return m_vaccines; } -Returns the number of vaccines Penelope has
+		int getFlameCharges() const { return m_flame_charges; } -Returns the number of flame charges Penelope has
+		int getLandmines() const { return m_landmines; } -Returns the number of landmines penelope has
+		int getInfectionCount() const; -Returns penelopes infection count
+		double getDistanceToPenelope(Actor* src) const; -Returns the distance from a given source actor to Penelope
+		double getDistanceToNearestZombieAt(double src_x, double src_y); -Returns the distance from a given point to the nearest zombie
+		void getNearestZombieTargetAt(double src_x, double src_y, double& target_x, double& target_y, double& target_distance); -Stores the nearest zombie target from a point into a point
+		int getPlayerRow() const; -Returns the row Penelope is on
+		int getPlayerCol() const; -Returns the collumn Penelope is in
+		int getNumNeedRescue(); -Returns the number of Agents that need to be rescued still
+		
+		  // Mutators
+		void setLevelCompletion(bool completion_status) -Modifies the current level completion status
+		{
+			m_level_complete = completion_status;
+		}
+		void activateLandmine() { m_is_active = true; } -Makes a landmine active
+		void addVaccine() { m_vaccines++; } -Adds a vaccine to Penelope's inventory 
+		void decVaccines() { m_vaccines--; } -Decrements the number vaccines in Penelope's inventory
+		void addFlameCharges(int n) { m_flame_charges += n; } -Adds n flame charges to Penelope's inventory
+		void decFlameCharges() { m_flame_charges--; } -Decrements the number of flame charges in Penelope's inventory
+		void addLandmines(int n) { m_landmines += n; } -Adds n landmines to Penelope's inventory
+		void decLandmines() { m_landmines--; } -Decrements the number landmines in Penelope's inventory
+		void addActor(Actor* actor) { actors.push_back(actor); } -Adds a new pointer to Actor to the actor storage container
+	
+
+	Actor:
+		Actor(int imageID, double startX, double startY, Direction dir, StudentWorld* world, int depth = 0, double size = 1.0) -Constructs a new Actor, sends data to GraphObject
+		:GraphObject(imageID, startX, startY, dir, depth, size)
+		{
+			m_world = world;
+		}
+		virtual ~Actor() {}; -Actor's destructor, doesn't do anything but must exist virtually to destruct all derived classes
+		virtual void doSomething() = 0; -Pure virtual doSomething(), Actor is an ABC and doesn't have its own doSomething() but still needs to tell StudentWorld 
+																	 where to go to find the proper doSomething methods for each Actor*
+	
+	 
+		  //accessors
+		StudentWorld* getWorld() const { return m_world; } -Returns a pointer to the StudentWorld* that each Actor exists in
+		virtual int getInfectionCount() const { return m_infection_count; } -Returns the infection count of an Actor
+	
+		  //privileges, statuses, and properties, false by default unless redefined in a subclass, virtual so subclasses can define their own behaviors
+		virtual bool allowsOverlap() const { return m_allow_overlap; } -Determines if an Actor subclass allows overlap
+		virtual bool canUseExits() const { return m_can_use_exit; } -Determines if an Actor subclass can use exits
+		virtual bool blocksFlames() const { return m_blocks_flames; } -Determines if an Actor subclass blocks flames
+		virtual bool blocksVomit() const { return m_blocks_vomit; } -Determines if an Actor subclass blocks vomit
+		virtual bool canFallInPit() const { return m_can_fall_in_pit; } -Determines if an Actor subclass can fall in a pit
+		virtual bool canTriggerLandmine() const { return m_can_trigger_landmine; } -Determines if an Actor subclass can trigger a landmine
+		virtual bool canTriggerInactiveLandmine() { return m_can_trigger_inactive_landmine; } -Determines if an Actor subclass can trigger an inactive landmine
+		virtual bool canDie() const { return m_can_die; } -Determines if an Actor subclass can die
+		virtual bool canDieByFlames() const { return m_can_die_by_flames; } -Determines if an Actor subclass can die by being hit by flames
+		virtual bool canBeInfectedByVomit() const { return m_can_be_infected_by_vomit; } -Determines if an Actor subclass can be infected by vomit
+		virtual bool canBeRescued() const { return m_can_be_rescued; } -Determines if an Actor subclass can be rescued
+		virtual bool isZombie() const { return m_is_zombie; } -Determines if an Actor subclass is a zombie
+		virtual bool isZombieTarget() const { return m_is_zombie_target; } -Determines if an Actor subclass is a zombie target
+		virtual bool isActiveLandmine() { return m_is_active; } -Determines if an Actor subclass is an active landmine
+		virtual void performDeathAction() { return; } -An Actor subclass may perform an action upon its death if defined. i.e. let out a horrible sound
+				bool isDead() const { return m_is_dead; } -Returns if an Actor subclass is dead. Not virtual because all Actors are initially alive.
+				bool isInfected() const { return m_is_infected; } - -Returns if an Actor subclass is dead. Not virtual because all Actors are initially not infected 
+
+	
+		  //mutators
+		void setDead() { m_is_dead = true; } -Changes an Actor subclass's state from alive to dead, not virtual because the method is the same for any actor
+		void setInfected() { m_is_infected = true; } -Changes an Actor subclass's infected state from healthy to infected, not virtual because the method is the same for any actor
+		void setHealthy() { m_is_infected = false; } -Changes an Actor subclass's infected state from infected to healthy, not virtual because the method is the same for any actor
+		void incInfectionCount() { m_infection_count++; } -Increments an Actor subclass's infection count
+
+
+	Agent : public Actor //ABC because it inherits a pure virtual doSomething() method from Actor
+		Agent(int ImageID, int start_x, int start_y, StudentWorld* world) -Constructs a new Agent, sends data to construct an Actor 
+		:Actor(ImageID, start_x, start_y, right, world)
+		{
+		}
+		virtual ~Agent() {}; -Destructors must be virtual so it reaches down here
+		  
+		  //redefinition of inherited properties to have different outcomes than the defaults in the Actor base class
+		virtual bool canFallInPit() const { return m_can_fall_in_pit; } -All Agents can fall in pits so they must use a new definition
+		virtual bool canTriggerLandmine() const { return m_can_trigger_landmine; } - All Agents can trigger landmines so they must use a new definition 
+		virtual bool canDie() const { return m_can_die; } -All Agents can die so they must use a new definition
+		virtual bool canDieByFlames() const { return m_can_die_by_flames; } -All Agents can die by flames so they must use a new definition
+
+
+
+	Human : public Agent //ABC because it inherits a pure virtual doSomething() method from Actor
+		Human(int ImageID, int start_x, int start_y, StudentWorld* world) -Constructs a new Human, sends data to construct an Agent
+		:Agent(ImageID, start_x, start_y,  world)
+		{
+		}
+		virtual ~Human() {}; -Destructors must be virtual so it reaches down here
+			 //redefinition of inherited properties and privileges to allow different outcomes than the defaults in the Actor base class
+		virtual bool canUseExits() const { return m_can_use_exit; } -All Humans can use exits so they must use a new definition
+		virtual bool isZombieTarget() const { return m_is_zombie_target; } -All humans are zombie targets so they must use a new definition
+		virtual bool canBeInfectedByVomit() const { return m_can_be_infected_by_vomit; } -All humans can be infected by vomit so they must use a new defintion
+
+
+
+	Penelope : public Human
+		Penelope(int start_x, int start_y, StudentWorld* world) -Constructs a new Penelope, sends data to consturct a Human
+		:Human(IID_PLAYER, start_x, start_y, world)
+		{		
+		}
+		virtual ~Penelope() {}; -Destructors must be virtual so it reaches down here
+		virtual void doSomething(); -Defines the pure virtual one in Actor. Responsible for key presses, movement, dropping items, shooting flames
+
+
+
+	Citizen : public Human
+		Citizen(int start_x, int start_y, StudentWorld* world)
+		:Human(IID_CITIZEN, start_x, start_y, world)
+		{
+		}
+		virtual ~Citizen() {}; -Destructors must be virtual so it reaches down here
+		virtual void doSomething(); -Defines the pure virtual one in Actor. Responsible for running away from zombies and running towards penelope mostly.
+		virtual bool canBeRescued() const { return m_can_be_rescued; } -Citizens can be rescued so they must use a new definition
+
+
+
+	Zombie : public Agent //ABC because it inherits a pure virtual doSomething() method from Actor
+		Zombie(int start_x, int start_y, StudentWorld* world) -Constructs Zombie and passes data to construct Agent
+		:Agent(IID_ZOMBIE, start_x, start_y, world)
+		{
+		}
+		virtual ~Zombie() {}; -Destructors must be virtual so it reaches down here
+		virtual bool isZombie() const { return m_is_zombie; } -All zombie are zombies... so they must use a new definition to override Actor
+
+
+
+	Smart_Zombie : public Zombie
+		Smart_Zombie(int start_x, int start_y, StudentWorld* world) -Constructs a new Smart_Zombie and passes the data to construct the Zombie base class
+		:Zombie(start_x, start_y, world)
+		{
+		}
+		virtual ~Smart_Zombie() {}; -Destructors must be virtual so it reaches down here
+		virtual void doSomething(); -Defines the pure virtual one in Actor. Responsible for running towards zombie targets
+		virtual void performDeathAction() -Redefines the one in Actor base so that a Smart_Zombie can increase the player score and play a sound when it dies
+		 
+
+
+	Dumb_Zombie : public Zombie
+		Dumb_Zombie(int start_x, int start_y, StudentWorld* world)  -Constructs a new Dumb_Zombie and passes the data to construct the Zombie base class,
+		:Zombie(start_x, start_y, world)							  Determines if the Dumb_Zombie will be a vaccine carrier
+		{
+			//1 in 10 chance of having a vaccine goodie 
+			int chance_vaccine_carrier = randInt(0, 9);
+			if (chance_vaccine_carrier == 0)
+				vaccine_carrier = true;
+			else
+				vaccine_carrier = false;
+		}
+		virtual ~Dumb_Zombie() {}; -Destructors must be virtual so it reaches down here
+		virtual void doSomething(); -Defines the pure virtual one in Actor base class. Responsible for running towards zombie targets
+		virtual void performDeathAction(); -Redefines the one in Actor base so that a Dumb_Zombie can increase the player score, drop a vaccine, and play a sound when it dies
+
+
+
+	Wall : public Actor
+		Wall(int start_x, int start_y, StudentWorld* world) -Constructs a new wall and sends data to construct the Actor base class
+		:Actor(IID_WALL, start_x, start_y, right, world)
+		{
+		}
+		virtual ~Wall() {}; -Destructors must be virtual
+		virtual void doSomething() { return; } //walls don't do anything
+			 //redefinition of inherited properties and privileges to allow different outcomes than the defaults in the Actor base class
+		virtual bool blocksFlames() const { return m_blocks_flames; } -All walls block flames so redefinition is needed
+		virtual bool blocksVomit() const { return m_blocks_vomit; } -All walls block vomit so a redefinition is needed
+
+
+
+	Activating_Object : public Actor //this is an ABC
+		Activating_Object(int ImageID, int start_x, int start_y, StudentWorld* world, Direction dir = right, int depth = 0) -Constructs a Activating object, sends data to Actor
+		:Actor(ImageID, start_x, start_y, right, world, depth)
+		{
+		}
+		virtual ~Activating_Object() {}; -Destructors must be virtual
+		virtual bool allowsOverlap() const { return m_allow_overlap; } -All activating objects allow overlap so a redefinition is needed
+
+
+	Exit : public Activating_Object
+		Exit(int start_x, int start_y, StudentWorld* world) -Constructs a new exit and sends data to construct the base class
+		:Activating_Object(IID_EXIT, start_x, start_y, world, 1)
+		{
+		}
+		virtual ~Exit() {}; -Destructors must be virtual
+		virtual void doSomething(); -Communicates with Studentworld to see if an Actor that can use exits overlapped
+		virtual bool blocksFlames() const { return m_blocks_flames; } -All exits block flames so a redefinition is needed
+
+
+
+	Pit : public Activating_Object
+		Pit(int start_x, int start_y, StudentWorld* world) -Constructs a new exit and sends data to construct the base class
+		:Activating_Object(IID_PIT, start_x, start_y, world) 
+		{
+		}
+		virtual ~Pit() {}; -Destructors must be virtual okay
+		virtual void doSomething(); -Communicates with student world to see if an actor that can use a pit overlaps
+
+
+
+	Landmine : public Activating_Object
+		Landmine(int start_x, int start_y, StudentWorld* world) -Constructs a new landmie and sends data to construct the base class
+		:Activating_Object(IID_LANDMINE, start_x, start_y, world, 1)
+		{
+		}
+	    virtual ~Landmine() {};
+		virtual void doSomething(); -Communicates with student world to see if an actor that can trigger a landmine overlaps
+			//redefinition of inherited properties and privileges to allow different outcomes than the defaults in the Actor base class
+		virtual bool canDie() { return m_can_die; } -All landmines can die, but not all activating objects can die so a redefinition is needed
+		virtual bool canDieByFlames() { return m_can_die_by_flames; } -All landmines can die by flames
+		
+	 
+
+	 Flame : public Activating_Object
+		Flame(int start_x, int start_y, Direction dir, StudentWorld* world)
+		:Activating_Object(IID_FLAME, start_x, start_y, world, dir, 1)
+		{
+		}
+		virtual ~Flame() {}; -Destructors must be virtual
+		virtual void doSomething(); -Communicates with student world to see if an actor overlaps with a flame
+			//redefinition of inherited properties and privileges to allow different outcomes than the defaults in the Actor base class
+		virtual bool canDie() const { return m_can_die; }  -All flames can die, but not all activating objects can die so a redefinition is needed
+		virtual bool canTriggerInactiveLandmine() const { return m_can_trigger_inactive_landmine; } -Flames can trigger inactive landmines so a redifinition is needed
+	
+
+
+	Vomit : public Activating_Object
+		Vomit(int start_x, int start_y, Direction dir, StudentWorld* world) -Constructs a new piece of vomit and sends data to construct the base classes
+		:Activating_Object(IID_VOMIT, start_x, start_y, world, dir)
+		{
+		}
+		virtual ~Vomit() {}; -Destructors must be virtual
+		virtual void doSomething(); -Communicates with student world to see if an actor overlaps with vomit so they can get infected
+		
+		virtual bool canDie() { return m_can_die; }  -All vomit can die, but not all activating objects can die so a redefinition is needed
+
+
+
+	 Goodie : public Activating_Object
+		 Goodie(int imageID, int start_x, int start_y, StudentWorld* world) -Constructs a new goodie and sends data to construct the base classes
+		 :Activating_Object(imageID, start_x, start_y, world, 1)
+		{	
+		}
+		virtual ~Goodie() {};  -Destructors must be virtual
+		  //redefinition of inherited properties and privileges to allow different outcomes than the defaults in the Actor base class
+		virtual bool canDieByFlames() const { return m_can_die_by_flames; } -All goodies can die by flames so a redefinition is needed
+		virtual bool canDie() const { return m_can_die; } -All goodies can die so a redefinition is needed
+
+	
+	Vaccine_Goodie : public Goodie
+		Vaccine_Goodie(int start_x, int start_y, StudentWorld* world) -Constructs a new vaccine_goodie and sends data to construct the base classes
+		:Goodie(IID_VACCINE_GOODIE, start_x, start_y, world)
+		{	
+		}
+		virtual ~Vaccine_Goodie() {}; -Destructors must be virtual
+		virtual void doSomething(); -Communicates with student world to see if penelope/any actor that can pick up vaccine goodies overlaps
+
+
+	Gas_Can_Goodie : public Goodie
+		Gas_Can_Goodie(int start_x, int start_y, StudentWorld* world) -Constructs a new gas_can goodie and sends data to construct the base classes
+		:Goodie(IID_GAS_CAN_GOODIE, start_x, start_y, world)
+		{
+		}
+		virtual ~Gas_Can_Goodie() {}; -Destructors must be virtual
+		virtual void doSomething(); -Communicates with student world to see if penelope/any actor that can pick up gas cans overlaps
+
+
+	Landmine_Goodie : public Goodie
+		Landmine_Goodie(int start_x, int start_y, StudentWorld* world) -Constructs a new landmine_goodie and sends data to construct the base classes
+		:Goodie(IID_LANDMINE_GOODIE, start_x, start_y, world)
+		{
+		}
+		virtual ~Landmine_Goodie() {}; -Destructors must be virtual
+		virtual void doSomething(); -Communicates with student world to see if penelope/any actor that can pick up landmine goodies overlaps
+
+
+2. I finished all essential functionality but there is a bug with landmines where if you put 2 or more landmines directly on top of eachother the program crashes. I tried
+   and have no idea how to fix this at the moment.
+
+3. Assumptions/Design Decisions
+	- Spec didn't say if walls block vomit so I just assumed they do.
+	- Spec didn't say landmines had to check for walls around them before shooting flames so I didn't check
+	- Zombies are allowed to fling the vaccine into the path of the flames but the vaccine will be instantly
+	= You reccomended to reduce coupling between studentworld and actor so I did reduce it in some areas but it is not fully decoupled because I still
+	  have to include the studentworld.h in actor.h/actor.cpp
+
+4. Class testing descriptions - thought i was done with english
+	
+	StudentWorld
+			Init was tested using the third level mostly because it had a lot of different Actors in it and then comparing to the level data files
+		to make sure they match up. Move was tested by making sure stuff was deleted when it dies and the game/level ended properly. Tested collision 
+		and overlap functions by trying to run through walls and running over goodies while modifying penelope's properties to resemble other Actor's. 
+		Tested actor abilities in the same way. Accesors were tested by displaying their values to cout or the game status line and seeing if it was right. 
+		Mutators were testing in the same way (Make sure you can add landmines or vaccines to the inventory etc.) Cleanup was tested by making sure I could call
+		it twice with no runtime errors and that every object created by new was deleted by delete when student world went out of scope.  I tested the nearest zombie 
+		functions by printing out the distances and making sure the nearest zombies were actually chosen. Same goes for zombie targets.
+
+	Actor
+		Actor mostly consists of accessor functions that dictate the properties and behaviors of each subclass as defined in the private data members. Booleans are really 
+		easy to test so I basically found a lot of errors just by stuff not behaving properly and then making sure that the booleans were defined according to the spec.
+		Some of the mutators like setHealthy, setDead were also easy cause the actor either dies or it doesn't and you can see that on the screen. As for more complicated 		ones like activateLandmine I messed around with the safety ticks and tried increasing them to higher numbers to make sure that Flames could acually activate
+		innactive landmines and it didn't just appear so by convenient timing. A lot of the Actor class used sound and was easily tested because you know its working 		properly if you hear the proper sounds.
+
+	Agent
+			Agent is pretty similar to Actor with a few different properties such as being able to die or fall in pits. All agents should be able to trigger
+		landmines but goodies shouldn't. That stuff was just tested by running into pits and seeing if I died. Or having a horde of zombies trapped by landmines explode.
+		Fun stuff. A lot of citizens were killed in the testing process too because I had to know if they died by fire too. 
+
+	Human
+		Humans can use exits, are zombie targets, and can be infected by vomit. So I just tested all those properties and made sure zombies couldn't do the same
+
+	Penelope
+		Penelope had a decently long implementation because of all the key inputs and shooting flames and stuff. I built her incrementally and tested each 				key/functionality as I went and then all at once at the end. I had to make sure the flames wouldn't overlap exits and they shot out at the right area and stuff. 		Also that she just responded to all the different directions of movement properly and didn't go through walls but could pick up goodies and fall through pits. I 			made sure the vaccines would heal her and the infection count increased properly using the game status display.
+
+	Citizen 
+		Citizen had probably the longest implementation of the Actors because of all the different movement options. First I checked to make sure the citizen would follow 		penelope when they were on the same row or col regardless of distance and that helped me see if the citizen would overlap with walls or not. Then I made it the 			80px and made the algorithm for following on any row or column. I compared the movement with the provided Zombiedash sample to see if they looked similar enough. 		The sample had less lag but that was expected. I made sure that citizens would choose a random direction and would only choose directions that got them closer. The 		code ended up having a lot of copy pasting because the movements were essentially the same for each direction. I did the same sort of testing for zombies and 		compared the result to the sample as well.
+
+	Zombie Base Class
+		I first implemented the Dumb_Zombie and then worked out the similarities that I expected the Smart_Zombie to share with it and moved those functions into the base 			class. I tested the movement plan distances by changing the range of random distances and seeing how far the zomebie would go on average. I tested the vomit by 			just letting the citizens run into it basically and printing out the vomit coordinates and citizen coordinates to cout and then seeing if the citizen turned into a 		zombie.
+
+	Dumb_Zombie
+		I tested the doSomething by making sure the zombie moved around seemingly randomly and only vomited when a citizen was infront of it. And I made sure each movement plan was regenerated by prining to cout when the distance reached zero. I tested the drop vaccine by making the odds 50/50 and then killing a bunch of dumb zombies to see if they would fling the vaccine about 50% of the time or at least when it isnt in the path of flames. I made sure that they can trigger landmines, can  fall in pits and can die by flames.  I made sure that the deathAction increased the players score by the correct ammount.
+	
+	Smart_Zombie
+		I tested the doSomething by making sure the zombie moved closer to citizens even if they are on different rows and only vomiited when it was directly in front of 		one. I made sure that they can trigger landmines, can  fall in pits and can die by flames. I made sure that the deathAction increased the players score by the 		correct ammount. I tried to make the doSomething as simple as possible.
+
+	Wall
+		Walls don't do much. I just made sure that nothing could walk thru the walls and that they would block flames, flinged goodies and vomit. 
+
+	Activating_Object
+		Made sure that they allowed overlap.
+
+	Exit
+		Made sure that flames couldn't go over them. Made sure that only penelope and citizens could use exits by spawning like 20 and forcing zombies and stuff to go over 		them.
+
+	Pit
+		Made sure that any agent could fall in a pit and that they would die and be removed from the game upon doing so. Made sure flames woudln't go into pits because 		that was an issue I was having initiailly.
+
+	Landmine
+		Tested that landmines can be triggered by any agent and must be active before they can be triggered. Made sure they spawned flames around when blown up and created 		a pit underneath them. Made sure that when you use a landmine the number of landmines in the inventory will decrease and you can't use one if you don't have	 		one. Tested their ability to be triggered by flames and the fact that they need not be active yet by increasing the ticks to give me enough time to try to shoot it 		in an inactive state. I allowed flames to penetrante walls if they are shot from the landmine.
+
+	Flame
+		Flame was tested by spawning a bunch of flames and seeing if I would die if I ran into them. Then I moved onto being able to shoot flames after collecting flame 		charges. Made sure that you can't shoot more flames than you have flame charges and that the flames would only exist on screen for two ticks once created. I allowed flames 	to penetrante walls if they are shot from the landmine but not if they are shot by 
+	penelope. 
+
+	Vomit
+		Vomit was essentially the same as Flames but instead of dying you just get infected so I tested it in the same manner pretty much. 
+		
+	Goodie Base Class
+		Made sure that all goodies can die by flames. All goodie implementations are the same except for what you get when you pick them up. They all rely on the 				studentworld function. pickUpGoodie() which works for any Goodie. 
+
+	Vaccine_Goodie
+		Made sure that vaccines would die by flames and that only penelope could pick them up if she overlapped. Made sure that they add 50 points when picked up and play 		the proper sound. Made sure that they were added to the inventory when picked up. 
+
+	Gas_Can_Goodie
+		Made sure that gas cans would die by flames and that only penelope could pick them up if she overlapped. Made sure that they add 50 points when picked up and play 		the proper sound. Made sure that they were added to the inventory when picked up. 
+
+	Landmine_Goodie
+		Made sure that landmine goodies would die by flames and that only penelope could pick them up if she overlapped. Made sure that they add 50 points when picked up 		and play the proper sound. Made sure that they were added to the inventory when picked up. 
+
+
+
+Some PsuedoCode for Hard to Follow Functions:
+	void Citizen::doSomething()
+		if dead
+			return;
+		if infected
+			increase the infection count
+			if infection count is >= 500
+				citizen dies
+				create new zombie
+					30% chance of becoming a smart zombie
+					70% chance of becoming a dumb zombie
+			return;
+		if paralyzed
+			set make not paralyzed for the next tick
+			return;
+		else
+			make paralyzed for the next tick
+
+		get the distance to the nearest zombie - dist_z
+		get the distance to penelope - dist_p
+
+		if there are no zombies or if dist_p < dist_z & dist_p <= 80px
+			move towards penelope if possible
+				if they are on the same row or col 
+					move in the direction that gets citizen closer if not blocked
+				else
+					get the 2 possible directions 
+					choose one randomly
+					move in that direction if not blocked
+		else if dist_z <= 80
+			move away from zombie
+				for each direction up, down, left, right
+					if citizen can move 2px in that direction
+						find the potential new distance to the nearest zombie at that location
+						if the distance in a particular direction is the largest of each of directions
+							check if that distance is larger than the initial d_z
+								move in that direction
+			return;
+
+
+
+	void Smart_Zombie::getNewMovementPlan()
+		get new movement plan distance in range [3, 10]
+		find the nearest zombie target - target_dist
+		if target_dist > 80 //out of range
+			set direction to a random direction up, down, left, right
+		else if target_dist <= 80
+			if zombie and target are on the same row or col
+				set direction to the direction that gets the zombie closer
+			else
+				choose 1 of the 2 directions that get zombie closer randomly
+					set direction to the chosen direction
+
+
+
+	bool StudentWorld::willCollideAt(double new_x, double new_y, Actor* src, bool flame_exception, bool vomit_exception)
+		if src is not penelope
+			if the euclidean distance from penelope to new_x, new_y is < SPRITE_WIDTh
+				return true
+
+		for each actor in actors container
+			if(src == actor )
+				continue
+			if flame exception
+				if curr_actor doesn't block flames
+					continue
+			else if vomit exception
+				if curr_actor doesnt block vomit
+					continue
+			else if actor allows overlap
+				continue
+			
+			if euclidean distance from actor to new_x, new_y < SPRITE_WIDTH
+				return true
+		return false
+
+				
+				
+
+			
+
+Thanks for taking the time to make an easy to follow, organized spec. It made this project a lot more doable. It was a long one, but I had a good time with it overall.
+
+
+
+
+
+	
